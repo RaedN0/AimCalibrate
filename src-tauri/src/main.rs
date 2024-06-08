@@ -4,6 +4,11 @@
 use std::{sync::{Arc, Mutex}};
 use tauri::{GlobalShortcutManager, Manager, State};
 use enigo::{Enigo, MouseControllable};
+use winapi::shared::windef::HWND;
+use winapi::um::winuser::{GetWindowLongPtrW, SetWindowLongPtrW, GWLP_USERDATA, GWLP_WNDPROC};
+
+mod mouse_tracker;
+use mouse_tracker::{MouseTracker, window_proc};
 
 struct MouseParameters {
     cm360: f32,
@@ -34,6 +39,22 @@ fn main() {
     tauri::Builder::default()
     .manage(Arc::new(Mutex::new(MouseParameters { cm360: 0.0, dpi: 0 })))
         .setup(|app| {
+            let window = app.get_window("main").unwrap();
+            let hwnd = match window.hwnd() {
+                Ok(hwnd) => hwnd.0 as HWND,
+                Err(_) => panic!("Failed to get window handle"),
+            };
+
+            let mut tracker = MouseTracker::new();
+            if !tracker.start_tracking(hwnd) {
+                println!("Failed to register raw input device.");
+            }
+
+            unsafe {
+                SetWindowLongPtrW(hwnd, GWLP_USERDATA, &tracker as *const _ as isize);
+                SetWindowLongPtrW(hwnd, GWLP_WNDPROC, window_proc as isize);
+            }
+
             let handle = app.handle();
             let global_shortcut_manager = handle.global_shortcut_manager();
 
@@ -53,4 +74,3 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-    
