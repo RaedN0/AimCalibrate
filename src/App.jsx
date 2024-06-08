@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
-import { invoke } from "@tauri-apps/api/tauri";
-import "./App.css";
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
+import './App.css';
 import MainSensitivity from './pages/MainSensitivity';
 import ScopedSensitivity from './pages/ScopedSensitivity';
 import MessureFov from './pages/MessureFov';
@@ -11,11 +10,11 @@ function App() {
     <Router>
       <div className="container">
         <div className="sidebar">
-          <h2>Navigation</h2>
+          <h2>AimCalibrate</h2>
           <ul>
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/scoped-sensitivity">Settings</Link></li>
-            <li><Link to="/measure-fov">About</Link></li>
+            <li><NavLink exact to="/" activeClassName="active">Main Sensitivity</NavLink></li>
+            <li><NavLink to="/scoped-sensitivity" activeClassName="active">Scoped Sensitivity</NavLink></li>
+            <li><NavLink to="/measure-fov" activeClassName="active">Measure FOV</NavLink></li>
           </ul>
         </div>
         <div className="main-content">
@@ -23,7 +22,7 @@ function App() {
             <Route path="/" element={<MainSensitivity />} />
             <Route path="/scoped-sensitivity" element={<ScopedSensitivity />} />
             <Route path="/measure-fov" element={<MessureFov />} />
-            </Routes>
+          </Routes>
         </div>
       </div>
     </Router>
