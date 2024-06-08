@@ -1,45 +1,32 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { invoke } from "@tauri-apps/api/tauri";
 import "./App.css";
+import MainSensitivity from './pages/MainSensitivity';
+import ScopedSensitivity from './pages/ScopedSensitivity';
+import MessureFov from './pages/MessureFov';
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-  
-  const [cm360, setCm360] = useState(0);
-  const [dpi, setDpi] = useState(0);
-  
-  const handleSetValues = () => {
-    console.log(`Set values - cm/360: ${cm360}, DPI: ${dpi}`);
-    invoke('set_mouse_parameters', { cm360, dpi });
-  };
-
   return (
-    <div>
-      <h1>GameSensSetup</h1>
-      <div>
-        <label htmlFor="cm360">cm/360:</label>
-        <input
-          type="number"
-          id="cm360"
-          name="cm360"
-          value={cm360}
-          onChange={(e) => setCm360(parseFloat(e.target.value))}
-        />
+    <Router>
+      <div className="container">
+        <div className="sidebar">
+          <h2>Navigation</h2>
+          <ul>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/settings">Settings</Link></li>
+            <li><Link to="/about">About</Link></li>
+          </ul>
+        </div>
+        <div className="main-content">
+          <Routes>
+            <Route path="/" element={<MainSensitivity />} />
+            <Route path="/scoped-sensitivity" element={<ScopedSensitivity />} />
+            <Route path="/measure-fov" element={<MessureFov />} />
+            </Routes>
+        </div>
       </div>
-      <div>
-        <label htmlFor="dpi">DPI:</label>
-        <input
-          type="number"
-          id="dpi"
-          name="dpi"
-          value={dpi}
-          onChange={(e) => setDpi(parseFloat(e.target.value))}
-        />
-      </div>
-      <button onClick={handleSetValues}>Set Values</button>
-    </div>
+    </Router>
   );
 }
 
