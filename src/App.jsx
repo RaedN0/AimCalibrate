@@ -14,8 +14,8 @@ function App() {
           <h2>Navigation</h2>
           <ul>
             <li><Link to="/">Home</Link></li>
-            <li><Link to="/settings">Settings</Link></li>
-            <li><Link to="/about">About</Link></li>
+            <li><Link to="/scoped-sensitivity">Settings</Link></li>
+            <li><Link to="/measure-fov">About</Link></li>
           </ul>
         </div>
         <div className="main-content">
