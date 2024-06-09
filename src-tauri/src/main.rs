@@ -9,24 +9,24 @@ mod mouse_tracker;
 use mouse_tracker::{MouseTracker, AppState, APP_STATE};
 
 mod calculations;
-use calculations::{calculate_scoped_counts, calculate_yaw, estimate_fov};
+use calculations::{calculate_scoped_counts, calculate_yaw, estimate_fov, calculate_counts};
 
 #[derive(Serialize)]
 struct UserSettings {
     cm360: f32,
     dpi: i32,
     normal_fov: f32,
-    zoomed_fov: f32,
+    scoped_fov: f32,
 }
 
 #[tauri::command]
-fn set_user_settings(cm360: f32, dpi: i32, normal_fov: f32, zoomed_fov: f32, state: State<'_, Arc<Mutex<UserSettings>>>) {
+fn set_user_settings(cm360: f32, dpi: i32, normal_fov: f32, scoped_fov: f32, state: State<'_, Arc<Mutex<UserSettings>>>) {
     let mut params = state.lock().unwrap();
     params.cm360 = cm360;
     params.dpi = dpi;
     params.normal_fov = normal_fov;
-    params.zoomed_fov = zoomed_fov;
-    println!("Mouse parameters set - cm/360: {}, DPI: {}, NormalFOV: {}, ZoomedFOV: {}", cm360, dpi, normal_fov, zoomed_fov);
+    params.scoped_fov = scoped_fov;
+    println!("Mouse parameters set - cm/360: {}, DPI: {}, NormalFOV: {}, ZoomedFOV: {}", cm360, dpi, normal_fov, scoped_fov);
 }
 
 #[tauri::command]
@@ -36,7 +36,7 @@ fn get_initial_values(state: State<'_, Arc<Mutex<UserSettings>>>) -> UserSetting
         cm360: params.cm360,
         dpi: params.dpi,
         normal_fov: params.normal_fov,
-        zoomed_fov: params.zoomed_fov,
+        scoped_fov: params.scoped_fov,
     }
 }
 
@@ -51,12 +51,6 @@ fn move_mouse_by(x: i32, y: i32) {
     let mut enigo = Enigo::new();
     enigo.mouse_move_relative(x, y);
     println!("Mouse moved by ({}, {}) counts", x, y);
-}
-
-fn calculate_counts(cm: f32, dpi: i32) -> i32 {
-    let inches_per360 = cm / 2.54;
-    let counts_per360 = inches_per360 * dpi as f32;
-    counts_per360 as i32
 }
 
 fn setup_global_shortcut(handle: AppHandle) {
@@ -79,7 +73,8 @@ fn setup_global_shortcut(handle: AppHandle) {
                 move_mouse_by(counts, 0);
             },
             "scoped_sensitivity" => {
-                println!("F1 pressed on scoped sensitivity page");
+                let counts = calculate_scoped_counts(params.cm360, params.dpi, params.normal_fov, params.scoped_fov);
+                move_mouse_by(counts, 0);
             },
             "measure_fov" => {
                 println!("F1 pressed on measure FOV page");
@@ -105,7 +100,7 @@ fn setup_global_shortcut(handle: AppHandle) {
 
 fn main() {
     tauri::Builder::default()
-        .manage(Arc::new(Mutex::new(UserSettings { cm360: 0.0, dpi: 0, normal_fov: 0.0, zoomed_fov: 0.0 })))
+        .manage(Arc::new(Mutex::new(UserSettings { cm360: 0.0, dpi: 0, normal_fov: 0.0, scoped_fov: 0.0 })))
         .manage(Arc::new(Mutex::new(AppState {
             current_page: "main_sensitivity".to_string(),
             tracker: MouseTracker::new(),

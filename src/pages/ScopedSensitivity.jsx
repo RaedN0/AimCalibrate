@@ -18,7 +18,7 @@ function ScopedSensitivity() {
                 setCm360(response.cm360);
                 setDpi(response.dpi);
                 setNormalFov(response.normal_fov);
-                setScopedFov(response.zoomed_fov);
+                setScopedFov(response.scoped_fov);
             } catch (error) {
                 console.error('Failed to fetch initial values:', error);
             }
@@ -33,7 +33,7 @@ function ScopedSensitivity() {
             cm360: parseFloat(cm360),
             dpi: parseInt(dpi),
             normalFov: parseFloat(normalFov),
-            zoomedFov: parseFloat(scopedFov)
+            scopedFov: parseFloat(scopedFov)
         }).catch((error) => {
             console.error('Failed to set user settings:', error);
         });
