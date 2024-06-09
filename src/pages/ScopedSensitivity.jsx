@@ -1,15 +1,51 @@
-import React, {useEffect, useState} from 'react';
-import {invoke} from '@tauri-apps/api/tauri';
+import React, { useEffect, useState, useRef } from 'react';
+import { invoke } from '@tauri-apps/api/tauri';
+import debounce from 'lodash.debounce';
 
 function ScopedSensitivity() {
-
     const [cm360, setCm360] = useState(0);
     const [dpi, setDpi] = useState(0);
     const [normalFov, setNormalFov] = useState(0);
     const [scopedFov, setScopedFov] = useState(0);
 
+    const isInitialMount = useRef(true);
+
+    // Fetch initial values when the component mounts
     useEffect(() => {
-        invoke('set_user_settings', {cm360: parseFloat(cm360), dpi: parseInt(dpi), normalFov: parseFloat(normalFov), zoomedFov: parseFloat(scopedFov)});
+        const fetchInitialValues = async () => {
+            try {
+                const response = await invoke('get_initial_values');
+                setCm360(response.cm360);
+                setDpi(response.dpi);
+                setNormalFov(response.normal_fov);
+                setScopedFov(response.zoomed_fov);
+            } catch (error) {
+                console.error('Failed to fetch initial values:', error);
+            }
+        };
+
+        fetchInitialValues();
+    }, []);
+
+    // Debounced function to update user settings
+    const updateSettings = debounce((cm360, dpi, normalFov, scopedFov) => {
+        invoke('set_user_settings', {
+            cm360: parseFloat(cm360),
+            dpi: parseInt(dpi),
+            normalFov: parseFloat(normalFov),
+            zoomedFov: parseFloat(scopedFov)
+        }).catch((error) => {
+            console.error('Failed to set user settings:', error);
+        });
+    }, 500); // Debounce by 500ms
+
+    // Update backend when values change, but not on initial load
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+        } else {
+            updateSettings(cm360, dpi, normalFov, scopedFov);
+        }
     }, [cm360, dpi, normalFov, scopedFov]);
 
     return (
@@ -32,14 +68,14 @@ function ScopedSensitivity() {
                     id="dpi"
                     name="dpi"
                     value={dpi}
-                    onChange={(e) => setDpi(parseFloat(e.target.value))}
+                    onChange={(e) => setDpi(parseInt(e.target.value))}
                 />
             </div>
             <div className="input-group">
                 <label htmlFor="normalFov">Normal FOV:</label>
                 <input
                     type="number"
-                    id="normalfov"
+                    id="normalFov"
                     name="normalFov"
                     value={normalFov}
                     onChange={(e) => setNormalFov(parseFloat(e.target.value))}
@@ -49,7 +85,7 @@ function ScopedSensitivity() {
                 <label htmlFor="scopedFov">Scoped FOV:</label>
                 <input
                     type="number"
-                    id="scopedfov"
+                    id="scopedFov"
                     name="scopedFov"
                     value={scopedFov}
                     onChange={(e) => setScopedFov(parseFloat(e.target.value))}

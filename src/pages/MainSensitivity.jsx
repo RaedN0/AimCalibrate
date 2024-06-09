@@ -7,12 +7,22 @@ function MainSensitivity() {
 
 
     useEffect(() => {
+        // Fetch initial values from the backend
+        invoke('get_initial_values').then((response) => {
+            setCm360(response.cm360);
+            setDpi(response.dpi);
+        }).catch((error) => {
+            console.error('Failed to fetch initial values:', error);
+        });
+    }, []);
+
+    useEffect(() => {
         invoke('set_user_settings', {cm360: parseFloat(cm360), dpi: parseInt(dpi), normalFov: 0, zoomedFov: 0});
     }, [cm360, dpi]);
 
     return (
         <div>
-            <h1>GameSensSetup</h1>
+            <h1>Main Sensitivity</h1>
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
                 <input

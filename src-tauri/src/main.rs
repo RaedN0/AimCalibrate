@@ -3,6 +3,7 @@ use tauri::{GlobalShortcutManager, Manager, State, AppHandle};
 use enigo::{Enigo, MouseControllable};
 use winapi::shared::windef::HWND;
 use winapi::um::winuser::{SetWindowLongPtrW, GWLP_WNDPROC};
+use serde::Serialize;
 
 mod mouse_tracker;
 use mouse_tracker::{MouseTracker, AppState, APP_STATE};
@@ -10,6 +11,7 @@ use mouse_tracker::{MouseTracker, AppState, APP_STATE};
 mod calculations;
 use calculations::{calculate_scoped_counts, calculate_yaw, estimate_fov};
 
+#[derive(Serialize)]
 struct UserSettings {
     cm360: f32,
     dpi: i32,
@@ -25,6 +27,17 @@ fn set_user_settings(cm360: f32, dpi: i32, normal_fov: f32, zoomed_fov: f32, sta
     params.normal_fov = normal_fov;
     params.zoomed_fov = zoomed_fov;
     println!("Mouse parameters set - cm/360: {}, DPI: {}, NormalFOV: {}, ZoomedFOV: {}", cm360, dpi, normal_fov, zoomed_fov);
+}
+
+#[tauri::command]
+fn get_initial_values(state: State<'_, Arc<Mutex<UserSettings>>>) -> UserSettings {
+    let params = state.lock().unwrap();
+    UserSettings {
+        cm360: params.cm360,
+        dpi: params.dpi,
+        normal_fov: params.normal_fov,
+        zoomed_fov: params.zoomed_fov,
+    }
 }
 
 #[tauri::command]
@@ -92,7 +105,7 @@ fn setup_global_shortcut(handle: AppHandle) {
 
 fn main() {
     tauri::Builder::default()
-        .manage(Arc::new(Mutex::new(UserSettings { cm360: 0.0, dpi: 0, normal_fov: 0.0, zoomed_fov: 0.0})))
+        .manage(Arc::new(Mutex::new(UserSettings { cm360: 0.0, dpi: 0, normal_fov: 0.0, zoomed_fov: 0.0 })))
         .manage(Arc::new(Mutex::new(AppState {
             current_page: "main_sensitivity".to_string(),
             tracker: MouseTracker::new(),
@@ -115,7 +128,7 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![set_user_settings, set_current_page])
+        .invoke_handler(tauri::generate_handler![set_user_settings, set_current_page, get_initial_values])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
