@@ -10,17 +10,21 @@ use mouse_tracker::{MouseTracker, AppState, APP_STATE};
 mod calculations;
 use calculations::{calculate_scoped_counts, calculate_yaw, estimate_fov};
 
-struct MouseParameters {
+struct UserSettings {
     cm360: f32,
     dpi: i32,
+    normal_fov: f32,
+    zoomed_fov: f32,
 }
 
 #[tauri::command]
-fn set_mouse_parameters(cm360: f32, dpi: i32, state: State<'_, Arc<Mutex<MouseParameters>>>) {
+fn set_user_settings(cm360: f32, dpi: i32, normal_fov: f32, zoomed_fov: f32, state: State<'_, Arc<Mutex<UserSettings>>>) {
     let mut params = state.lock().unwrap();
     params.cm360 = cm360;
     params.dpi = dpi;
-    println!("Mouse parameters set - cm/360: {}, DPI: {}", cm360, dpi);
+    params.normal_fov = normal_fov;
+    params.zoomed_fov = zoomed_fov;
+    println!("Mouse parameters set - cm/360: {}, DPI: {}, NormalFOV: {}, ZoomedFOV: {}", cm360, dpi, normal_fov, zoomed_fov);
 }
 
 #[tauri::command]
@@ -52,7 +56,7 @@ fn setup_global_shortcut(handle: AppHandle) {
 
     global_shortcut_manager.register("F1", move || {
         let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
-        let state: State<Arc<Mutex<MouseParameters>>> = app_handle.state();
+        let state: State<Arc<Mutex<UserSettings>>> = app_handle.state();
         let mut app_state = app_state.lock().unwrap();
         let params = state.lock().unwrap();
 
@@ -88,7 +92,7 @@ fn setup_global_shortcut(handle: AppHandle) {
 
 fn main() {
     tauri::Builder::default()
-        .manage(Arc::new(Mutex::new(MouseParameters { cm360: 0.0, dpi: 0 })))
+        .manage(Arc::new(Mutex::new(UserSettings { cm360: 0.0, dpi: 0, normal_fov: 0.0, zoomed_fov: 0.0})))
         .manage(Arc::new(Mutex::new(AppState {
             current_page: "main_sensitivity".to_string(),
             tracker: MouseTracker::new(),
@@ -111,7 +115,7 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![set_mouse_parameters, set_current_page])
+        .invoke_handler(tauri::generate_handler![set_user_settings, set_current_page])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

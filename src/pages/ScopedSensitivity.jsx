@@ -8,6 +8,11 @@ function ScopedSensitivity() {
     const [normalFov, setNormalFov] = useState(0);
     const [scopedFov, setScopedFov] = useState(0);
 
+    useEffect(() => {
+        console.log(`Setting mouse parameters - cm/360: ${cm360}, DPI: ${dpi}`);
+        invoke('set_mouse_parameters', {cm360: parseFloat(cm360), dpi: parseInt(dpi)});
+    }, [cm360, dpi]);
+
     return (
         <div>
             <h1>Scoped Sensitivity</h1>

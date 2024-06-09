@@ -5,14 +5,10 @@ function MainSensitivity() {
     const [cm360, setCm360] = useState(0);
     const [dpi, setDpi] = useState(0);
 
-    const handleSetValues = () => {
-        console.log(`Set values - cm/360: ${cm360}, DPI: ${dpi}`);
-        invoke('set_mouse_parameters', {cm360, dpi});
-    };
 
     useEffect(() => {
         console.log(`Setting mouse parameters - cm/360: ${cm360}, DPI: ${dpi}`);
-        invoke('set_mouse_parameters', {cm360: parseFloat(cm360), dpi: parseInt(dpi)});
+        invoke('set_user_settings', {cm360: parseFloat(cm360), dpi: parseInt(dpi), normalFov: 0, zoomedFov: 0});
     }, [cm360, dpi]);
 
     return (
