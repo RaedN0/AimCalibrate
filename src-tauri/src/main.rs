@@ -3,10 +3,12 @@ use tauri::{GlobalShortcutManager, Manager, State, AppHandle};
 use enigo::{Enigo, MouseControllable};
 use winapi::shared::windef::HWND;
 use winapi::um::winuser::{SetWindowLongPtrW, GWLP_WNDPROC};
-use lazy_static::lazy_static;
 
 mod mouse_tracker;
 use mouse_tracker::{MouseTracker, AppState, APP_STATE};
+
+mod calculations;
+use calculations::{calculate_scoped_counts, calculate_yaw, estimate_fov};
 
 struct MouseParameters {
     cm360: f32,

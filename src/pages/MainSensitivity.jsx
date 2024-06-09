@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { invoke } from '@tauri-apps/api/tauri';
+import React, {useEffect, useState} from 'react';
+import {invoke} from '@tauri-apps/api/tauri';
 
 function MainSensitivity() {
     const [cm360, setCm360] = useState(0);
@@ -7,8 +7,13 @@ function MainSensitivity() {
 
     const handleSetValues = () => {
         console.log(`Set values - cm/360: ${cm360}, DPI: ${dpi}`);
-        invoke('set_mouse_parameters', { cm360, dpi });
+        invoke('set_mouse_parameters', {cm360, dpi});
     };
+
+    useEffect(() => {
+        console.log(`Setting mouse parameters - cm/360: ${cm360}, DPI: ${dpi}`);
+        invoke('set_mouse_parameters', {cm360: parseFloat(cm360), dpi: parseInt(dpi)});
+    }, [cm360, dpi]);
 
     return (
         <div>
@@ -33,7 +38,6 @@ function MainSensitivity() {
                     onChange={(e) => setDpi(parseFloat(e.target.value))}
                 />
             </div>
-            <button onClick={handleSetValues}>Set Values</button>
         </div>
     );
 }
