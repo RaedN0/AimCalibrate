@@ -1,6 +1,6 @@
 import React from 'react';
 
-function MessureFov() {
+function MeasureFov() {
     return (
         <div>
             <h1>About</h1>
@@ -9,4 +9,4 @@ function MessureFov() {
     );
 }
 
-export default MessureFov;
+export default MeasureFov;

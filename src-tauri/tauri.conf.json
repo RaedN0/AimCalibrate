@@ -6,8 +6,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "aimcalibrate",
-    "version": "0.0.0"
+    "productName": "AimCalibrate",
+    "version": "1.0.0"
   },
   "tauri": {
     "allowlist": {
