@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::sync::{Arc, Mutex};
 use tauri::{GlobalShortcutManager, Manager, State, AppHandle};
 use enigo::{Enigo, MouseControllable};
