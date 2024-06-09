@@ -1,11 +1,8 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
-use std::sync::{Arc, Mutex};
-use tauri::{GlobalShortcutManager, Manager, State};
+use std::{sync::{Arc, Mutex}};
+use tauri::{GlobalShortcutManager, Manager, State, AppHandle};
 use enigo::{Enigo, MouseControllable};
 use winapi::shared::windef::HWND;
-use winapi::um::winuser::{GWLP_USERDATA, GWLP_WNDPROC, SetWindowLongPtrW};
+use winapi::um::winuser::{GetWindowLongPtrW, SetWindowLongPtrW, GWLP_USERDATA, GWLP_WNDPROC};
 
 mod mouse_tracker;
 use mouse_tracker::{MouseTracker, window_proc};
@@ -46,10 +43,42 @@ fn calculate_counts(cm: f32, dpi: i32) -> i32 {
     counts_per360 as i32
 }
 
+fn setup_global_shortcut(handle: AppHandle) {
+    let global_shortcut_manager = handle.global_shortcut_manager();
+
+    // Make the global_shortcut_manager mutable
+    let mut global_shortcut_manager = global_shortcut_manager.clone();
+
+    let app_handle = handle.clone();
+
+    global_shortcut_manager.register("F1", move || {
+        let app_state: State<Arc<Mutex<AppState>>> = app_handle.state();
+        let state: State<Arc<Mutex<MouseParameters>>> = app_handle.state();
+        let current_page = app_state.lock().unwrap().current_page.clone();
+        let params = state.lock().unwrap();
+
+        match current_page.as_str() {
+            "main_sensitivity" => {
+                let counts = calculate_counts(params.cm360, params.dpi);
+                move_mouse_by(counts, 0);
+            },
+            "scoped_sensitivity" => {
+                println!("F1 pressed on scoped sensitivity page");
+            },
+            "measure_fov" => {
+                println!("F1 pressed on measure FOV page");
+            },
+            _ => {
+                println!("F1 pressed on unknown page");
+            }
+        }
+    }).unwrap();
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(Arc::new(Mutex::new(MouseParameters { cm360: 0.0, dpi: 0 })))
-        .manage(Arc::new(Mutex::new(AppState { current_page: "home".to_string() })))
+        .manage(Arc::new(Mutex::new(AppState { current_page: "main_sensitivity".to_string() })))
         .setup(|app| {
             let window = app.get_window("main").unwrap();
             let hwnd = match window.hwnd() {
@@ -67,34 +96,7 @@ fn main() {
                 SetWindowLongPtrW(hwnd, GWLP_WNDPROC, window_proc as isize);
             }
 
-            let handle = app.handle();
-            let global_shortcut_manager = handle.global_shortcut_manager();
-
-            // Make the global_shortcut_manager mutable
-            let mut global_shortcut_manager = global_shortcut_manager;
-
-            global_shortcut_manager.register("F1", move || {
-                let app_state: State<Arc<Mutex<AppState>>> = handle.state();
-                let state: State<Arc<Mutex<MouseParameters>>> = handle.state();
-                let current_page = app_state.lock().unwrap().current_page.clone();
-                let params = state.lock().unwrap();
-
-                match current_page.as_str() {
-                    "home" => {
-                        let counts = calculate_counts(params.cm360, params.dpi);
-                        move_mouse_by(counts, 0);
-                    },
-                    "settings" => {
-                        println!("F1 pressed on settings page");
-                    },
-                    "about" => {
-                        println!("F1 pressed on about page");
-                    },
-                    _ => {
-                        println!("F1 pressed on unknown page");
-                    }
-                }
-            }).unwrap();
+            setup_global_shortcut(app.handle());
 
             Ok(())
         })

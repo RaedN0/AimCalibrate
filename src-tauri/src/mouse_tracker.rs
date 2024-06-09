@@ -4,6 +4,7 @@ use winapi::shared::minwindef::{DWORD, LPVOID, PUINT, UINT, WPARAM, LPARAM, LRES
 use winapi::shared::ntdef::{HANDLE, LONG};  // Import LONG directly from ntdef
 use winapi::shared::windef::HWND;
 use winapi::um::winuser::*;
+use winapi::um::libloaderapi::GetModuleHandleW;
 
 const RIDEV_INPUTSINK: DWORD = 0x00000100;
 const RIM_TYPEMOUSE: DWORD = 0;
