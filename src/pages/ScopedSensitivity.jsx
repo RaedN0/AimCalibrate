@@ -9,9 +9,8 @@ function ScopedSensitivity() {
     const [scopedFov, setScopedFov] = useState(0);
 
     useEffect(() => {
-        console.log(`Setting mouse parameters - cm/360: ${cm360}, DPI: ${dpi}`);
-        invoke('set_mouse_parameters', {cm360: parseFloat(cm360), dpi: parseInt(dpi)});
-    }, [cm360, dpi]);
+        invoke('set_user_settings', {cm360: parseFloat(cm360), dpi: parseInt(dpi), normalFov: parseFloat(normalFov), zoomedFov: parseFloat(scopedFov)});
+    }, [cm360, dpi, normalFov, scopedFov]);
 
     return (
         <div>
@@ -40,20 +39,20 @@ function ScopedSensitivity() {
                 <label htmlFor="normalFov">Normal FOV:</label>
                 <input
                     type="number"
-                    id="cm360"
-                    name="cm360"
-                    value={cm360}
-                    onChange={(e) => setCm360(parseFloat(e.target.value))}
+                    id="normalfov"
+                    name="normalFov"
+                    value={normalFov}
+                    onChange={(e) => setNormalFov(parseFloat(e.target.value))}
                 />
             </div>
             <div className="input-group">
                 <label htmlFor="scopedFov">Scoped FOV:</label>
                 <input
                     type="number"
-                    id="dpi"
-                    name="dpi"
-                    value={dpi}
-                    onChange={(e) => setDpi(parseFloat(e.target.value))}
+                    id="scopedfov"
+                    name="scopedFov"
+                    value={scopedFov}
+                    onChange={(e) => setScopedFov(parseFloat(e.target.value))}
                 />
             </div>
         </div>

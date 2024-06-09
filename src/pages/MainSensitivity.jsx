@@ -7,7 +7,6 @@ function MainSensitivity() {
 
 
     useEffect(() => {
-        console.log(`Setting mouse parameters - cm/360: ${cm360}, DPI: ${dpi}`);
         invoke('set_user_settings', {cm360: parseFloat(cm360), dpi: parseInt(dpi), normalFov: 0, zoomedFov: 0});
     }, [cm360, dpi]);
 
