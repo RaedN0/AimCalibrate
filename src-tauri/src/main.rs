@@ -1,11 +1,15 @@
-use std::{sync::{Arc, Mutex}};
+use std::sync::{Arc, Mutex};
 use tauri::{GlobalShortcutManager, Manager, State, AppHandle};
 use enigo::{Enigo, MouseControllable};
 use winapi::shared::windef::HWND;
-use winapi::um::winuser::{GetWindowLongPtrW, SetWindowLongPtrW, GWLP_USERDATA, GWLP_WNDPROC};
+use winapi::um::winuser::{SetWindowLongPtrW, GWLP_WNDPROC, DefWindowProcW, WM_INPUT};
+use winapi::shared::minwindef::{LRESULT, UINT, WPARAM, LPARAM};
+use std::ptr::null_mut;
+use std::ptr::NonNull;
+use lazy_static::lazy_static;
 
 mod mouse_tracker;
-use mouse_tracker::{MouseTracker, window_proc};
+use mouse_tracker::MouseTracker;
 
 struct MouseParameters {
     cm360: f32,
@@ -14,6 +18,11 @@ struct MouseParameters {
 
 struct AppState {
     current_page: String,
+    tracker: MouseTracker,
+}
+
+lazy_static! {
+    static ref APP_STATE: Mutex<Option<Arc<Mutex<AppState>>>> = Mutex::new(None);
 }
 
 #[tauri::command]
@@ -52,12 +61,12 @@ fn setup_global_shortcut(handle: AppHandle) {
     let app_handle = handle.clone();
 
     global_shortcut_manager.register("F1", move || {
-        let app_state: State<Arc<Mutex<AppState>>> = app_handle.state();
+        let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
         let state: State<Arc<Mutex<MouseParameters>>> = app_handle.state();
-        let current_page = app_state.lock().unwrap().current_page.clone();
+        let mut app_state = app_state.lock().unwrap();
         let params = state.lock().unwrap();
 
-        match current_page.as_str() {
+        match app_state.current_page.as_str() {
             "main_sensitivity" => {
                 let counts = calculate_counts(params.cm360, params.dpi);
                 move_mouse_by(counts, 0);
@@ -67,18 +76,60 @@ fn setup_global_shortcut(handle: AppHandle) {
             },
             "measure_fov" => {
                 println!("F1 pressed on measure FOV page");
+                if app_state.tracker.tracking {
+                    app_state.tracker.stop_tracking().unwrap();
+                    println!("Tracking stopped. Counts: {}", app_state.tracker.count);
+                } else {
+                    let window = app_handle.get_window("main").unwrap();
+                    let hwnd = match window.hwnd() {
+                        Ok(hwnd) => hwnd.0 as HWND,
+                        Err(_) => panic!("Failed to get window handle"),
+                    };
+                    app_state.tracker.start_tracking(hwnd).unwrap();
+                    println!("Tracking started.");
+                }
             },
             _ => {
                 println!("F1 pressed on unknown page");
             }
         }
+
     }).unwrap();
+}
+
+unsafe extern "system" fn window_proc(
+    hwnd: HWND,
+    msg: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
+    match msg {
+        WM_INPUT => {
+            let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
+            let mut tracker = app_state.lock().unwrap();
+
+            let raw_input = std::ptr::NonNull::new(lparam as *mut std::ffi::c_void).unwrap();
+            match tracker.tracker.get_raw_input_data(raw_input) {
+                Ok(raw_input_data) => {
+                    let x_movement = raw_input_data.data.mouse().lLastX;
+                    tracker.tracker.count += x_movement;
+                }
+                Err(e) => eprintln!("Failed to get raw input data: {}", e),
+            }
+        }
+        _ => {}
+    }
+
+    DefWindowProcW(hwnd, msg, wparam, lparam)
 }
 
 fn main() {
     tauri::Builder::default()
         .manage(Arc::new(Mutex::new(MouseParameters { cm360: 0.0, dpi: 0 })))
-        .manage(Arc::new(Mutex::new(AppState { current_page: "main_sensitivity".to_string() })))
+        .manage(Arc::new(Mutex::new(AppState {
+            current_page: "main_sensitivity".to_string(),
+            tracker: MouseTracker::new(),
+        })))
         .setup(|app| {
             let window = app.get_window("main").unwrap();
             let hwnd = match window.hwnd() {
@@ -86,13 +137,10 @@ fn main() {
                 Err(_) => panic!("Failed to get window handle"),
             };
 
-            let mut tracker = MouseTracker::new();
-            if !tracker.start_tracking(hwnd) {
-                println!("Failed to register raw input device.");
-            }
+            let app_state: State<Arc<Mutex<AppState>>> = app.state();
+            *APP_STATE.lock().unwrap() = Some(app_state.inner().clone());
 
             unsafe {
-                SetWindowLongPtrW(hwnd, GWLP_USERDATA, &tracker as *const _ as isize);
                 SetWindowLongPtrW(hwnd, GWLP_WNDPROC, window_proc as isize);
             }
 
