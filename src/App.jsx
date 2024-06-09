@@ -6,15 +6,20 @@ import ScopedSensitivity from './pages/ScopedSensitivity';
 import MessureFov from './pages/MessureFov';
 
 function App() {
+
+  const setPage = (page) => {
+    invoke('set_current_page', { page }).catch((err) => console.error(err));
+  };
+
   return (
     <Router>
       <div className="container">
         <div className="sidebar">
           <h2>AimCalibrate</h2>
           <ul>
-            <li><NavLink exact to="/" activeClassName="active">Main Sensitivity</NavLink></li>
-            <li><NavLink to="/scoped-sensitivity" activeClassName="active">Scoped Sensitivity</NavLink></li>
-            <li><NavLink to="/measure-fov" activeClassName="active">Measure FOV</NavLink></li>
+            <li><NavLink exact to="/" activeClassName="active" onClick={() => setPage("main_sensitivity")}>Main Sensitivity</NavLink></li>
+            <li><NavLink to="/scoped-sensitivity" activeClassName="active" onClick={() => setPage("scoped_sensitivity")}>Scoped Sensitivity</NavLink></li>
+            <li><NavLink to="/measure-fov" activeClassName="active" onClick={() => setPage("messure_fov")}>Measure FOV</NavLink></li>
           </ul>
         </div>
         <div className="main-content">
