@@ -2,27 +2,15 @@ use std::sync::{Arc, Mutex};
 use tauri::{GlobalShortcutManager, Manager, State, AppHandle};
 use enigo::{Enigo, MouseControllable};
 use winapi::shared::windef::HWND;
-use winapi::um::winuser::{SetWindowLongPtrW, GWLP_WNDPROC, DefWindowProcW, WM_INPUT};
-use winapi::shared::minwindef::{LRESULT, UINT, WPARAM, LPARAM};
-use std::ptr::null_mut;
-use std::ptr::NonNull;
+use winapi::um::winuser::{SetWindowLongPtrW, GWLP_WNDPROC};
 use lazy_static::lazy_static;
 
 mod mouse_tracker;
-use mouse_tracker::MouseTracker;
+use mouse_tracker::{MouseTracker, AppState, APP_STATE};
 
 struct MouseParameters {
     cm360: f32,
     dpi: i32,
-}
-
-struct AppState {
-    current_page: String,
-    tracker: MouseTracker,
-}
-
-lazy_static! {
-    static ref APP_STATE: Mutex<Option<Arc<Mutex<AppState>>>> = Mutex::new(None);
 }
 
 #[tauri::command]
@@ -93,34 +81,7 @@ fn setup_global_shortcut(handle: AppHandle) {
                 println!("F1 pressed on unknown page");
             }
         }
-
     }).unwrap();
-}
-
-unsafe extern "system" fn window_proc(
-    hwnd: HWND,
-    msg: UINT,
-    wparam: WPARAM,
-    lparam: LPARAM,
-) -> LRESULT {
-    match msg {
-        WM_INPUT => {
-            let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
-            let mut tracker = app_state.lock().unwrap();
-
-            let raw_input = std::ptr::NonNull::new(lparam as *mut std::ffi::c_void).unwrap();
-            match tracker.tracker.get_raw_input_data(raw_input) {
-                Ok(raw_input_data) => {
-                    let x_movement = raw_input_data.data.mouse().lLastX;
-                    tracker.tracker.count += x_movement;
-                }
-                Err(e) => eprintln!("Failed to get raw input data: {}", e),
-            }
-        }
-        _ => {}
-    }
-
-    DefWindowProcW(hwnd, msg, wparam, lparam)
 }
 
 fn main() {
@@ -141,7 +102,7 @@ fn main() {
             *APP_STATE.lock().unwrap() = Some(app_state.inner().clone());
 
             unsafe {
-                SetWindowLongPtrW(hwnd, GWLP_WNDPROC, window_proc as isize);
+                SetWindowLongPtrW(hwnd, GWLP_WNDPROC, MouseTracker::window_proc as isize);
             }
 
             setup_global_shortcut(app.handle());
