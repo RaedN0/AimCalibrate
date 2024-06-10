@@ -24,6 +24,11 @@ struct UserSettings {
     game_fov: f32,
 }
 
+#[derive(Clone, serde::Serialize)]
+struct FovUpdatePayload {
+    fov16: f32
+}
+
 #[tauri::command]
 fn set_user_settings(
     cm360: Option<f32>,
@@ -117,6 +122,14 @@ fn setup_global_shortcut(handle: AppHandle) {
                     println!("F1 pressed on measure FOV page");
                     if app_state.tracker.tracking {
                         app_state.tracker.stop_tracking().unwrap();
+
+                        let inches_per_360 = params.cm360 / 2.54;
+                        let counts = inches_per_360 * params.dpi as f32;
+
+                        let fov = estimate_fov(params.game_sens, calculate_yaw(counts as i32, params.game_sens), app_state.tracker.count);
+
+                        app_handle.emit_all("fov_update", FovUpdatePayload { fov16: fov }).unwrap();
+
                         println!("Tracking stopped. Counts: {}", app_state.tracker.count);
                     } else {
                         let window = app_handle.get_window("main").unwrap();

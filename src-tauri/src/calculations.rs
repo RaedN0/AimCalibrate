@@ -11,13 +11,13 @@ pub fn calculate_scoped_counts(cm_per360: f32, dpi: i32, normal_fov: f32, scoped
     scoped_counts as i32
 }
 
-pub fn calculate_yaw(counts: i32, sens: f64) -> f64 {
-    let inc = 360.0 / counts as f64;
+pub fn calculate_yaw(counts: i32, sens: f32) -> f32 {
+    let inc = 360.0 / counts as f32;
     inc / sens
 }
 
-pub fn estimate_fov(sens: f64, yaw: f64, counts: i32) -> f64 {
-    (yaw * counts as f64 * sens) * 2.0
+pub fn estimate_fov(sens: f32, yaw: f32, counts: i32) -> f32 {
+    (yaw * counts as f32 * sens) * 2.0
 }
 
 pub fn calculate_counts(cm: f32, dpi: i32) -> i32 {

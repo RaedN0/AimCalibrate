@@ -1,6 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {invoke} from '@tauri-apps/api/tauri';
 import debounce from 'lodash.debounce';
+import { listen } from '@tauri-apps/api/event';
 
 function MeasureFov() {
     const [cm360, setCm360] = useState(0);
@@ -48,6 +49,18 @@ function MeasureFov() {
             updateSettings(cm360, dpi, gameSens, fov16);
         }
     }, [cm360, dpi, gameSens, fov16]);
+
+    useEffect(() => {
+        const unlisten = listen('fov_update', (event) => {
+            const { fov16 } = event.payload;
+            console.log("updated");
+            handleFov16Change(fov16)
+        });
+
+        return () => {
+            unlisten.then((f) => f());
+        };
+    }, []);
 
     const handleFov16Change = (value) => {
         const newFov16 = parseFloat(value);
