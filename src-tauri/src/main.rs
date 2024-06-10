@@ -58,10 +58,23 @@ fn set_current_page(page: String, state: State<'_, Arc<Mutex<AppState>>>) {
     println!("Current page set to {}", app_state.current_page);
 }
 
-fn move_mouse_by(x: i32, y: i32) {
+fn move_mouse_by(mut x: i32, steps: i32) {
     let mut enigo = Enigo::new();
-    enigo.mouse_move_relative(x, y);
-    println!("Mouse moved by ({}, {}) counts", x, y);
+
+    let step_count = x / steps;
+    while x > 0 {
+        if x > step_count {
+            enigo.mouse_move_relative(step_count, 0);
+            println!("Mouse moved by {} counts", step_count);
+        }
+        else {
+            enigo.mouse_move_relative(x, 0);
+            println!("Mouse moved by {} counts", x);
+        }
+        x -= step_count;
+    }
+
+
 }
 
 fn setup_global_shortcut(handle: AppHandle) {
@@ -82,7 +95,7 @@ fn setup_global_shortcut(handle: AppHandle) {
             match app_state.current_page.as_str() {
                 "main_sensitivity" => {
                     let counts = calculate_counts(params.cm360, params.dpi);
-                    move_mouse_by(counts, 0);
+                    move_mouse_by(counts, 10);
                 }
                 "scoped_sensitivity" => {
                     let counts = calculate_scoped_counts(
@@ -91,7 +104,7 @@ fn setup_global_shortcut(handle: AppHandle) {
                         params.normal_fov,
                         params.scoped_fov,
                     );
-                    move_mouse_by(counts, 0);
+                    move_mouse_by(counts, 10);
                 }
                 "measure_fov" => {
                     println!("F1 pressed on measure FOV page");
