@@ -3,8 +3,8 @@
 use enigo::{Enigo, MouseControllable};
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use tauri::{AppHandle, GlobalShortcutManager, Manager, State, WindowEvent};
-use winapi::shared::ntstatus::STATUS_PARAMETER_QUOTA_EXCEEDED;
 use winapi::shared::windef::HWND;
 use winapi::um::winuser::{SetWindowLongPtrW, GWLP_WNDPROC};
 
@@ -91,6 +91,7 @@ fn move_mouse_by(mut x: i32, steps: i32) {
             println!("Mouse moved by {} counts", x);
         }
         x -= step_count;
+        std::thread::sleep(Duration::from_millis(10));
     }
 }
 
@@ -112,7 +113,7 @@ fn setup_global_shortcut(handle: AppHandle) {
             match app_state.current_page.as_str() {
                 "main_sensitivity" => {
                     let counts = calculate_counts(params.cm360, params.dpi);
-                    move_mouse_by(counts, 10);
+                    move_mouse_by(counts, 50);
                 }
                 "scoped_sensitivity" => {
                     let counts = calculate_scoped_counts(
@@ -121,7 +122,7 @@ fn setup_global_shortcut(handle: AppHandle) {
                         params.normal_fov,
                         params.scoped_fov,
                     );
-                    move_mouse_by(counts, 10);
+                    move_mouse_by(counts, 50);
                 }
                 "measure_fov" => {
                     println!("F1 pressed on measure FOV page");
