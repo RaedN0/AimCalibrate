@@ -28,9 +28,7 @@ function MainSensitivity() {
         debounce((cm360, dpi) => {
             invoke('set_user_settings', {
                 cm360: parseFloat(cm360),
-                dpi: parseInt(dpi),
-                normalFov: 0,
-                scopedFov: 0
+                dpi: parseInt(dpi)
             }).catch((error) => {
                 console.error('Failed to set user settings:', error);
             });

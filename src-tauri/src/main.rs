@@ -4,6 +4,7 @@ use enigo::{Enigo, MouseControllable};
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, GlobalShortcutManager, Manager, State, WindowEvent};
+use winapi::shared::ntstatus::STATUS_PARAMETER_QUOTA_EXCEEDED;
 use winapi::shared::windef::HWND;
 use winapi::um::winuser::{SetWindowLongPtrW, GWLP_WNDPROC};
 
@@ -19,24 +20,31 @@ struct UserSettings {
     dpi: i32,
     normal_fov: f32,
     scoped_fov: f32,
+    game_sens: f32,
+    game_fov: f32,
 }
 
 #[tauri::command]
 fn set_user_settings(
-    cm360: f32,
-    dpi: i32,
-    normal_fov: f32,
-    scoped_fov: f32,
+    cm360: Option<f32>,
+    dpi: Option<i32>,
+    normal_fov: Option<f32>,
+    scoped_fov: Option<f32>,
+    game_sens: Option<f32>,
+    game_fov: Option<f32>,
     state: State<'_, Arc<Mutex<UserSettings>>>,
 ) {
     let mut params = state.lock().unwrap();
-    params.cm360 = cm360;
-    params.dpi = dpi;
-    params.normal_fov = normal_fov;
-    params.scoped_fov = scoped_fov;
+
+    params.cm360 = cm360.unwrap_or(params.cm360);
+    params.dpi = dpi.unwrap_or(params.dpi);
+    params.normal_fov = normal_fov.unwrap_or(params.normal_fov);
+    params.scoped_fov = scoped_fov.unwrap_or(params.scoped_fov);
+    params.game_sens = game_sens.unwrap_or(params.game_sens);
+    params.game_fov = game_fov.unwrap_or(params.game_fov);
     println!(
-        "Mouse parameters set - cm/360: {}, DPI: {}, NormalFOV: {}, ZoomedFOV: {}",
-        cm360, dpi, normal_fov, scoped_fov
+        "Mouse parameters set - cm/360: {}, DPI: {}, NormalFOV: {}, ZoomedFOV: {}, GameSens: {}, GameFOV: {}",
+        params.cm360, params.dpi, params.normal_fov, params.scoped_fov, params.game_sens, params.game_fov
     );
 }
 
@@ -48,6 +56,8 @@ fn get_initial_values(state: State<'_, Arc<Mutex<UserSettings>>>) -> UserSetting
         dpi: params.dpi,
         normal_fov: params.normal_fov,
         scoped_fov: params.scoped_fov,
+        game_sens: params.game_sens,
+        game_fov: params.game_fov,
     }
 }
 
@@ -66,15 +76,12 @@ fn move_mouse_by(mut x: i32, steps: i32) {
         if x > step_count {
             enigo.mouse_move_relative(step_count, 0);
             println!("Mouse moved by {} counts", step_count);
-        }
-        else {
+        } else {
             enigo.mouse_move_relative(x, 0);
             println!("Mouse moved by {} counts", x);
         }
         x -= step_count;
     }
-
-
 }
 
 fn setup_global_shortcut(handle: AppHandle) {
@@ -86,7 +93,7 @@ fn setup_global_shortcut(handle: AppHandle) {
     let app_handle = handle.clone();
 
     global_shortcut_manager
-        .register("F1", move || {
+        .register("F2", move || {
             let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
             let state: State<Arc<Mutex<UserSettings>>> = app_handle.state();
             let mut app_state = app_state.lock().unwrap();
@@ -136,6 +143,8 @@ fn main() {
             dpi: 0,
             normal_fov: 0.0,
             scoped_fov: 0.0,
+            game_sens: 0.0,
+            game_fov: 0.0,
         })))
         .manage(Arc::new(Mutex::new(AppState {
             current_page: "main_sensitivity".to_string(),
