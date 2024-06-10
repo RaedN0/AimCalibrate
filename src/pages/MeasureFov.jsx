@@ -99,7 +99,7 @@ function MeasureFov() {
     };
 
     return (
-        <div className="measure-fov-container">
+        <div className="main-container">
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
                 <input

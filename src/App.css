@@ -96,22 +96,8 @@ input:focus {
   border-color: #007bff;
 }
 
-.main-sensitivity-container {
-  padding: 20px;
-  max-width: 400px;
-  margin: auto;
-}
-
-.scoped-sensitivity-container {
-  padding: 20px;
-  max-width: 600px;
-  margin: auto;
-}
-
-.measure-fov-container {
-  padding: 20px;
-  max-width: 400px;
-  margin: auto;
+.main-container {
+  padding-right: 20px;
 }
 
 .fov-group {
@@ -121,7 +107,7 @@ input:focus {
 
 .fov-group .input-group {
   flex: 1;
-  max-width: 50px;
+  max-width: 90px;
 }
 
 .fov-group .input-group:last-child {

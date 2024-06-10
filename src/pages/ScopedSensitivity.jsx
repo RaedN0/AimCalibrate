@@ -49,7 +49,7 @@ function ScopedSensitivity() {
     }, [cm360, dpi, normalFov, scopedFov]);
 
     return (
-        <div className="scoped-sensitivity-container">
+        <div className="main-container">
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
                 <input

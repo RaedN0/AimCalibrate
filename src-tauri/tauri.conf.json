@@ -20,8 +20,8 @@
     "windows": [
       {
         "title": "AimCalibrate",
-        "width": 550,
-        "height": 420,
+        "width": 600,
+        "height": 400,
         "resizable": false
       }
     ],
