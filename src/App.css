@@ -13,7 +13,7 @@ body {
 }
 
 .sidebar {
-  width: 250px;
+  width: 200px;
   background-color: #1f1f1f;
   display: flex;
   flex-direction: column;
@@ -94,4 +94,57 @@ body {
 input:focus {
   outline: none;
   border-color: #007bff;
+}
+
+.main-sensitivity-container {
+  padding: 20px;
+  max-width: 400px;
+  margin: auto;
+}
+
+.scoped-sensitivity-container {
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
+}
+
+.measure-fov-container {
+  padding: 20px;
+  max-width: 400px;
+  margin: auto;
+}
+
+.fov-group {
+  display: flex;
+  justify-content: space-between;
+}
+
+.fov-group .input-group {
+  flex: 1;
+  max-width: 50px;
+}
+
+.fov-group .input-group:last-child {
+  margin-right: 0;
+}
+
+.fov-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 30%;
+}
+
+.fov-box label {
+  margin-bottom: 5px;
+}
+
+.fov-box span {
+  display: inline-block;
+  width: 100%;
+  padding: 10px;
+  background-color: #333;
+  color: white;
+  text-align: center;
+  border-radius: 5px;
 }

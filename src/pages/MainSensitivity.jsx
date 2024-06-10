@@ -46,8 +46,7 @@ function MainSensitivity() {
     }, [cm360, dpi, debouncedUpdateSettings]);
 
     return (
-        <div>
-            <h1>Main Sensitivity</h1>
+        <div className="main-sensitivity-container">
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
                 <input

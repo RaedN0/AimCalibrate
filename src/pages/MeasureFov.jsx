@@ -16,6 +16,7 @@ function MeasureFov() {
     useEffect(() => {
         const fetchInitialValues = async () => {
             try {
+                await startListener();
                 const response = await invoke('get_initial_values');
                 setCm360(response.cm360);
                 setDpi(response.dpi);
@@ -50,17 +51,13 @@ function MeasureFov() {
         }
     }, [cm360, dpi, gameSens, fov16]);
 
-    useEffect(() => {
-        const unlisten = listen('fov_update', (event) => {
+    async function startListener() {
+        await listen('fov_update', (event) => {
             const { fov16 } = event.payload;
             console.log("updated");
             handleFov16Change(fov16)
         });
-
-        return () => {
-            unlisten.then((f) => f());
-        };
-    }, []);
+    }
 
     const handleFov16Change = (value) => {
         const newFov16 = parseFloat(value);
@@ -102,8 +99,7 @@ function MeasureFov() {
     };
 
     return (
-        <div>
-            <h1>Measure FOV</h1>
+        <div className="measure-fov-container">
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
                 <input
@@ -134,35 +130,37 @@ function MeasureFov() {
                     onChange={(e) => setGameSens(parseFloat(e.target.value))}
                 />
             </div>
-            <div className="input-group">
-                <label htmlFor="fov16">16:9:</label>
-                <input
-                    type="number"
-                    id="fov16"
-                    name="fov16"
-                    value={fov16}
-                    onChange={(e) => handleFov16Change(e.target.value)}
-                />
-            </div>
-            <div className="input-group">
-                <label htmlFor="fov43">4:3:</label>
-                <input
-                    type="number"
-                    id="fov43"
-                    name="fov43"
-                    value={fov43}
-                    onChange={(e) => handleFov43Change(e.target.value)}
-                />
-            </div>
-            <div className="input-group">
-                <label htmlFor="fov11">1:1:</label>
-                <input
-                    type="number"
-                    id="fov11"
-                    name="fov11"
-                    value={fov11}
-                    onChange={(e) => handleFov11Change(e.target.value)}
-                />
+            <div className="fov-group">
+                <div className="input-group">
+                    <label htmlFor="fov16">16:9:</label>
+                    <input
+                        type="number"
+                        id="fov16"
+                        name="fov16"
+                        value={fov16}
+                        onChange={(e) => handleFov16Change(e.target.value)}
+                    />
+                </div>
+                <div className="input-group">
+                    <label htmlFor="fov43">4:3:</label>
+                    <input
+                        type="number"
+                        id="fov43"
+                        name="fov43"
+                        value={fov43}
+                        onChange={(e) => handleFov43Change(e.target.value)}
+                    />
+                </div>
+                <div className="input-group">
+                    <label htmlFor="fov11">1:1:</label>
+                    <input
+                        type="number"
+                        id="fov11"
+                        name="fov11"
+                        value={fov11}
+                        onChange={(e) => handleFov11Change(e.target.value)}
+                    />
+                </div>
             </div>
         </div>
     );
