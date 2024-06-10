@@ -2,6 +2,9 @@ import React, {useEffect, useRef, useState} from 'react';
 import {invoke} from '@tauri-apps/api/tauri';
 import debounce from 'lodash.debounce';
 import { listen } from '@tauri-apps/api/event';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 function MeasureFov() {
     const [cm360, setCm360] = useState(0);
@@ -100,6 +103,13 @@ function MeasureFov() {
 
     return (
         <div className="main-container">
+            <div className="info-container">
+                <FontAwesomeIcon icon={faQuestionCircle}
+                    data-tooltip-id="info-tooltip"
+                    data-tooltip-content="This page lets you measure your FOV. Enter your cm/360 for hipfire, DPI, and your hipfire sensitivity. Scope in and line up something at the edge of your screen. Scope out, press F1, move your crosshair to the object you lined up, and press F1 again. Your FOV will then be displayed in the textboxes at the bottom. These can also be used to convert your FOV from one scale to the other two."
+                    data-tooltip-place="left" className="info-icon"/>
+                <ReactTooltip id="info-tooltip" className="tooltip-box" />
+            </div>
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
                 <input

@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import debounce from 'lodash.debounce';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 function ScopedSensitivity() {
     const [cm360, setCm360] = useState(0);
@@ -50,6 +53,13 @@ function ScopedSensitivity() {
 
     return (
         <div className="main-container">
+            <div className="info-container">
+                <FontAwesomeIcon icon={faQuestionCircle}
+                    data-tooltip-id="info-tooltip"
+                    data-tooltip-content="This page lets you match your scoped sensitivity to your hipfire sensitivity based on focal length scaling. Enter your cm/360 for hipfire, your DPI, your hipfire FOV, and your scoped FOV. Then press F1 to turn while scoping and adjust your scope sensitivity to turn exactly 360 degrees."
+                    data-tooltip-place="left" className="info-icon"/>
+                <ReactTooltip id="info-tooltip" className="tooltip-box" />
+            </div>
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
                 <input

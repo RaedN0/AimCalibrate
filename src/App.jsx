@@ -20,11 +20,11 @@ function App() {
                         <img src={logo} alt="AimCalibrate" className="logo"/>
                     </div>
                     <ul className="sidebar-menu">
-                        <li><NavLink exact to="/" activeClassName="active" onClick={() => setPage("main_sensitivity")}>Main
+                        <li><NavLink exact to="/" onClick={() => setPage("main_sensitivity")}>Main
                             Sensitivity</NavLink></li>
-                        <li><NavLink to="/scoped-sensitivity" activeClassName="active"
+                        <li><NavLink to="/scoped-sensitivity"
                                      onClick={() => setPage("scoped_sensitivity")}>Scoped Sensitivity</NavLink></li>
-                        <li><NavLink to="/measure-fov" activeClassName="active" onClick={() => setPage("measure_fov")}>Measure
+                        <li><NavLink to="/measure-fov" onClick={() => setPage("measure_fov")}>Measure
                             FOV</NavLink></li>
                     </ul>
                 </div>
