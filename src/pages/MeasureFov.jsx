@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { invoke } from '@tauri-apps/api/tauri';
+import React, {useEffect, useRef, useState} from 'react';
+import {invoke} from '@tauri-apps/api/tauri';
 import debounce from 'lodash.debounce';
+
 function MeasureFov() {
     const [cm360, setCm360] = useState(0);
     const [dpi, setDpi] = useState(0);
@@ -11,7 +12,6 @@ function MeasureFov() {
 
     const isInitialMount = useRef(true);
 
-    // Fetch initial values when the component mounts
     useEffect(() => {
         const fetchInitialValues = async () => {
             try {
@@ -19,9 +19,9 @@ function MeasureFov() {
                 setCm360(response.cm360);
                 setDpi(response.dpi);
                 setGameSens(response.game_sens);
-                setFov16(response.game_fov)
-
-                //TODO: Convert fovs
+                setFov16(response.game_fov);
+                setFov43(horizontalToFourThree(response.game_fov));
+                setFov11(horizontalToOneOne(response.game_fov));
             } catch (error) {
                 console.error('Failed to fetch initial values:', error);
             }
@@ -30,7 +30,6 @@ function MeasureFov() {
         fetchInitialValues();
     }, []);
 
-    // Debounced function to update user settings
     const updateSettings = debounce((cm360, dpi, gameSens, gameFov) => {
         invoke('set_user_settings', {
             cm360: parseFloat(cm360),
@@ -40,9 +39,8 @@ function MeasureFov() {
         }).catch((error) => {
             console.error('Failed to set user settings:', error);
         });
-    }, 500); // Debounce by 500ms
+    }, 500);
 
-    // Update backend when values change, but not on initial load
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
@@ -51,9 +49,48 @@ function MeasureFov() {
         }
     }, [cm360, dpi, gameSens, fov16]);
 
+    const handleFov16Change = (value) => {
+        const newFov16 = parseFloat(value);
+        setFov16(newFov16);
+        setFov43(horizontalToFourThree(newFov16));
+        setFov11(horizontalToOneOne(newFov16));
+    };
+
+    const handleFov43Change = (value) => {
+        const newFov43 = parseFloat(value);
+        const newFov16 = fourThreeToHorizontal(newFov43);
+        setFov16(newFov16);
+        setFov43(newFov43);
+        setFov11(horizontalToOneOne(newFov16));
+    };
+
+    const handleFov11Change = (value) => {
+        const newFov11 = parseFloat(value);
+        const newFov16 = oneOneToHorizontal(newFov11);
+        setFov16(newFov16);
+        setFov43(horizontalToFourThree(newFov16));
+        setFov11(newFov11);
+    };
+
+    const horizontalToFourThree = (fov) => {
+        return (2 * Math.atan(((Math.tan((fov / 2) * (Math.PI / 180))) * 3) / 4)) * (180 / Math.PI);
+    };
+
+    const horizontalToOneOne = (fov) => {
+        return (2 * Math.atan(((Math.tan((fov / 2) * (Math.PI / 180))) * 0.5625))) * (180 / Math.PI);
+    };
+
+    const fourThreeToHorizontal = (fov) => {
+        return 2 * Math.atan((Math.tan((fov / 2) * (Math.PI / 180)) * 4) / 3) * (180 / Math.PI);
+    };
+
+    const oneOneToHorizontal = (fov) => {
+        return 2 * Math.atan((Math.tan((fov / 2) * (Math.PI / 180)) / 0.5625)) * (180 / Math.PI);
+    };
+
     return (
         <div>
-            <h1>Scoped Sensitivity</h1>
+            <h1>Measure FOV</h1>
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
                 <input
@@ -75,43 +112,43 @@ function MeasureFov() {
                 />
             </div>
             <div className="input-group">
-                <label htmlFor="normalFov">Game Sens:</label>
+                <label htmlFor="gameSens">Game Sens:</label>
                 <input
                     type="number"
-                    id="gamesens"
+                    id="gameSens"
                     name="gameSens"
                     value={gameSens}
                     onChange={(e) => setGameSens(parseFloat(e.target.value))}
                 />
             </div>
             <div className="input-group">
-                <label htmlFor="scopedFov">16:9:</label>
+                <label htmlFor="fov16">16:9:</label>
                 <input
                     type="number"
                     id="fov16"
                     name="fov16"
                     value={fov16}
-                    onChange={(e) => setFov16(parseFloat(e.target.value))}
+                    onChange={(e) => handleFov16Change(e.target.value)}
                 />
             </div>
             <div className="input-group">
-                <label htmlFor="scopedFov">4:3:</label>
+                <label htmlFor="fov43">4:3:</label>
                 <input
                     type="number"
                     id="fov43"
                     name="fov43"
                     value={fov43}
-                    onChange={(e) => setFov43(parseFloat(e.target.value))}
+                    onChange={(e) => handleFov43Change(e.target.value)}
                 />
             </div>
             <div className="input-group">
-                <label htmlFor="scopedFov">1:1:</label>
+                <label htmlFor="fov11">1:1:</label>
                 <input
                     type="number"
                     id="fov11"
                     name="fov11"
                     value={fov11}
-                    onChange={(e) => setFov12(parseFloat(e.target.value))}
+                    onChange={(e) => handleFov11Change(e.target.value)}
                 />
             </div>
         </div>
