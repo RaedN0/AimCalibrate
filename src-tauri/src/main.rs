@@ -30,11 +30,6 @@ struct FovUpdatePayload {
 }
 
 #[tauri::command]
-fn close_application(app_handle: tauri::AppHandle) {
-    app_handle.exit(0);
-}
-
-#[tauri::command]
 fn set_user_settings(
     cm360: Option<f64>,
     dpi: Option<i32>,
@@ -52,10 +47,6 @@ fn set_user_settings(
     params.scoped_fov = scoped_fov.unwrap_or(params.scoped_fov);
     params.game_sens = game_sens.unwrap_or(params.game_sens);
     params.game_fov = game_fov.unwrap_or(params.game_fov);
-    println!(
-        "Mouse parameters set - cm/360: {}, DPI: {}, NormalFOV: {}, ZoomedFOV: {}, GameSens: {}, GameFOV: {}",
-        params.cm360, params.dpi, params.normal_fov, params.scoped_fov, params.game_sens, params.game_fov
-    );
 }
 
 #[tauri::command]
@@ -75,7 +66,6 @@ fn get_initial_values(state: State<'_, Arc<Mutex<UserSettings>>>) -> UserSetting
 fn set_current_page(page: String, state: State<'_, Arc<Mutex<AppState>>>) {
     let mut app_state = state.lock().unwrap();
     app_state.current_page = page;
-    println!("Current page set to {}", app_state.current_page);
 }
 
 fn move_mouse_by(mut x: i32, steps: i32) {
@@ -85,10 +75,8 @@ fn move_mouse_by(mut x: i32, steps: i32) {
     while x > 0 {
         if x > step_count {
             enigo.mouse_move_relative(step_count, 0);
-            println!("Mouse moved by {} counts", step_count);
         } else {
             enigo.mouse_move_relative(x, 0);
-            println!("Mouse moved by {} counts", x);
         }
         x -= step_count;
         std::thread::sleep(Duration::from_millis(10));
@@ -96,10 +84,7 @@ fn move_mouse_by(mut x: i32, steps: i32) {
 }
 
 fn setup_global_shortcut(handle: AppHandle) {
-    let global_shortcut_manager = handle.global_shortcut_manager();
-
-    // Make the global_shortcut_manager mutable
-    let mut global_shortcut_manager = global_shortcut_manager.clone();
+    let mut global_shortcut_manager = handle.global_shortcut_manager();
 
     let app_handle = handle.clone();
 
@@ -125,7 +110,6 @@ fn setup_global_shortcut(handle: AppHandle) {
                     move_mouse_by(counts, 50);
                 }
                 "measure_fov" => {
-                    println!("F1 pressed on measure FOV page");
                     if app_state.tracker.tracking {
                         app_state.tracker.stop_tracking().unwrap();
 
@@ -141,8 +125,6 @@ fn setup_global_shortcut(handle: AppHandle) {
                         app_handle
                             .emit_all("fov_update", FovUpdatePayload { fov16: fov })
                             .unwrap();
-
-                        println!("Tracking stopped. Counts: {}", app_state.tracker.count);
                     } else {
                         let window = app_handle.get_window("main").unwrap();
                         let hwnd = match window.hwnd() {
@@ -150,7 +132,6 @@ fn setup_global_shortcut(handle: AppHandle) {
                             Err(_) => panic!("Failed to get window handle"),
                         };
                         app_state.tracker.start_tracking(hwnd).unwrap();
-                        println!("Tracking started.");
                     }
                 }
                 _ => {
@@ -202,8 +183,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             set_user_settings,
             set_current_page,
-            get_initial_values,
-            close_application
+            get_initial_values
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
