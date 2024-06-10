@@ -4,7 +4,7 @@ use enigo::{Enigo, MouseControllable};
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tauri::{AppHandle, GlobalShortcutManager, Manager, State, WindowEvent};
+use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
 use winapi::shared::windef::HWND;
 use winapi::um::winuser::{SetWindowLongPtrW, GWLP_WNDPROC};
 
@@ -16,17 +16,17 @@ use calculations::{calculate_counts, calculate_scoped_counts, calculate_yaw, est
 
 #[derive(Serialize)]
 struct UserSettings {
-    cm360: f32,
+    cm360: f64,
     dpi: i32,
-    normal_fov: f32,
-    scoped_fov: f32,
-    game_sens: f32,
-    game_fov: f32,
+    normal_fov: f64,
+    scoped_fov: f64,
+    game_sens: f64,
+    game_fov: f64,
 }
 
 #[derive(Clone, serde::Serialize)]
 struct FovUpdatePayload {
-    fov16: f32,
+    fov16: f64,
 }
 
 #[tauri::command]
@@ -36,12 +36,12 @@ fn close_application(app_handle: tauri::AppHandle) {
 
 #[tauri::command]
 fn set_user_settings(
-    cm360: Option<f32>,
+    cm360: Option<f64>,
     dpi: Option<i32>,
-    normal_fov: Option<f32>,
-    scoped_fov: Option<f32>,
-    game_sens: Option<f32>,
-    game_fov: Option<f32>,
+    normal_fov: Option<f64>,
+    scoped_fov: Option<f64>,
+    game_sens: Option<f64>,
+    game_fov: Option<f64>,
     state: State<'_, Arc<Mutex<UserSettings>>>,
 ) {
     let mut params = state.lock().unwrap();
@@ -130,7 +130,7 @@ fn setup_global_shortcut(handle: AppHandle) {
                         app_state.tracker.stop_tracking().unwrap();
 
                         let inches_per_360 = params.cm360 / 2.54;
-                        let counts = inches_per_360 * params.dpi as f32;
+                        let counts = inches_per_360 * params.dpi as f64;
 
                         let fov = estimate_fov(
                             params.game_sens,
