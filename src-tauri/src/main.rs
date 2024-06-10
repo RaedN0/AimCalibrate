@@ -26,7 +26,12 @@ struct UserSettings {
 
 #[derive(Clone, serde::Serialize)]
 struct FovUpdatePayload {
-    fov16: f32
+    fov16: f32,
+}
+
+#[tauri::command]
+fn close_application(app_handle: tauri::AppHandle) {
+    app_handle.exit(0);
 }
 
 #[tauri::command]
@@ -98,7 +103,7 @@ fn setup_global_shortcut(handle: AppHandle) {
     let app_handle = handle.clone();
 
     global_shortcut_manager
-        .register("F2", move || {
+        .register("F1", move || {
             let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
             let state: State<Arc<Mutex<UserSettings>>> = app_handle.state();
             let mut app_state = app_state.lock().unwrap();
@@ -126,9 +131,15 @@ fn setup_global_shortcut(handle: AppHandle) {
                         let inches_per_360 = params.cm360 / 2.54;
                         let counts = inches_per_360 * params.dpi as f32;
 
-                        let fov = estimate_fov(params.game_sens, calculate_yaw(counts as i32, params.game_sens), app_state.tracker.count);
+                        let fov = estimate_fov(
+                            params.game_sens,
+                            calculate_yaw(counts as i32, params.game_sens),
+                            app_state.tracker.count,
+                        );
 
-                        app_handle.emit_all("fov_update", FovUpdatePayload { fov16: fov }).unwrap();
+                        app_handle
+                            .emit_all("fov_update", FovUpdatePayload { fov16: fov })
+                            .unwrap();
 
                         println!("Tracking stopped. Counts: {}", app_state.tracker.count);
                     } else {
@@ -181,15 +192,17 @@ fn main() {
 
             Ok(())
         })
-        .on_window_event(|event| {
-            if let WindowEvent::CloseRequested { .. } = event.event() {
-                std::process::exit(0);
+        .on_window_event(|event| match event.event() {
+            tauri::WindowEvent::CloseRequested { .. } => {
+                event.window().app_handle().exit(0);
             }
+            _ => {}
         })
         .invoke_handler(tauri::generate_handler![
             set_user_settings,
             set_current_page,
-            get_initial_values
+            get_initial_values,
+            close_application
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

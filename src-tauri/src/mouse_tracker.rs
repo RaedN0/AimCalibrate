@@ -2,7 +2,7 @@ use std::ptr::null_mut;
 use std::sync::{Arc, Mutex};
 use winapi::shared::minwindef::{LRESULT, UINT, WPARAM, LPARAM};
 use winapi::shared::windef::HWND;
-use winapi::um::winuser::{DefWindowProcW, RegisterRawInputDevices, RAWINPUTDEVICE, RIDEV_INPUTSINK, RIDEV_REMOVE, WM_INPUT, GetRawInputData, RID_INPUT, RAWINPUT, RAWINPUTHEADER};
+use winapi::um::winuser::{DefWindowProcW, RegisterRawInputDevices, RAWINPUTDEVICE, RIDEV_INPUTSINK, RIDEV_REMOVE, WM_INPUT, GetRawInputData, RID_INPUT, RAWINPUT, RAWINPUTHEADER, WM_CLOSE, WM_DESTROY};
 use std::ptr::NonNull;
 
 pub struct MouseTracker {
@@ -73,31 +73,40 @@ impl MouseTracker {
         self.count += x;
     }
 
-    pub unsafe extern "system" fn window_proc(
-        hwnd: HWND,
-        msg: UINT,
-        wparam: WPARAM,
-        lparam: LPARAM,
-    ) -> LRESULT {
-        match msg {
-            WM_INPUT => {
-                let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
-                let mut tracker = app_state.lock().unwrap();
+  pub unsafe extern "system" fn window_proc(
+    hwnd: HWND,
+    msg: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
+    match msg {
+        WM_INPUT => {
+            let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
+            let mut tracker = app_state.lock().unwrap();
 
-                let raw_input = std::ptr::NonNull::new(lparam as *mut std::ffi::c_void).unwrap();
-                match tracker.tracker.get_raw_input_data(raw_input) {
-                    Ok(raw_input_data) => {
-                        let x_movement = raw_input_data.data.mouse().lLastX;
-                        tracker.tracker.update_counts(x_movement);
-                    }
-                    Err(e) => eprintln!("Failed to get raw input data: {}", e),
+            let raw_input = std::ptr::NonNull::new(lparam as *mut std::ffi::c_void).unwrap();
+            match tracker.tracker.get_raw_input_data(raw_input) {
+                Ok(raw_input_data) => {
+                    let x_movement = raw_input_data.data.mouse().lLastX;
+                    tracker.tracker.update_counts(x_movement);
                 }
+                Err(e) => eprintln!("Failed to get raw input data: {}", e),
             }
-            _ => {}
         }
-
-        DefWindowProcW(hwnd, msg, wparam, lparam)
+        WM_CLOSE => {
+            winapi::um::winuser::DestroyWindow(hwnd);
+            return 0;
+        }
+        WM_DESTROY => {
+            winapi::um::winuser::PostQuitMessage(0);
+            return 0;
+        }
+        _ => {}
     }
+
+    DefWindowProcW(hwnd, msg, wparam, lparam)
+    }
+
 
     pub fn get_raw_input_data(&self, h_raw_input: NonNull<std::ffi::c_void>) -> Result<RAWINPUT, String> {
         let mut size: UINT = 0;
