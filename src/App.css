@@ -62,6 +62,8 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
+  align-self: center;
+  justify-self: center;
 }
 
 .card {
