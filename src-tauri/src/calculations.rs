@@ -8,7 +8,7 @@ pub fn calculate_scoped_counts(cm_per360: f64, dpi: i32, normal_fov: f64, scoped
 
     // Apply focal length scaling
     let scoped_counts = counts_per360 * ((normal_fov_radians / 2.0).tan() / (scoped_fov_radians / 2.0).tan());
-    scoped_counts as i32
+    scoped_counts.round() as i32
 }
 
 pub fn calculate_yaw(counts: i32, sens: f64) -> f64 {
@@ -23,5 +23,5 @@ pub fn estimate_fov(sens: f64, yaw: f64, counts: i32) -> f64 {
 pub fn calculate_counts(cm: f64, dpi: i32) -> i32 {
     let inches_per360 = cm / 2.54;
     let counts_per360 = inches_per360 * dpi as f64;
-    counts_per360 as i32
+    counts_per360.round() as i32
 }

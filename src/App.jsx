@@ -5,7 +5,7 @@ import './App.css';
 import MainSensitivity from './pages/MainSensitivity';
 import ScopedSensitivity from './pages/ScopedSensitivity';
 import MeasureFov from './pages/MeasureFov';
-import logo from '../public/acLogo.png'; // Adjust the path based on your project structure
+import logo from '/acLogo.png'; // Adjust the path based on your project structure
 
 function App() {
     const setPage = (page) => {
