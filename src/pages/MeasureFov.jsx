@@ -59,7 +59,6 @@ function MeasureFov() {
     async function startListener() {
         await listen('fov_update', (event) => {
             const {fov16} = event.payload;
-            console.log("updated");
             handleFov16Change(fov16)
         });
     }

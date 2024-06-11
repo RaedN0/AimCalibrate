@@ -57,6 +57,24 @@ body {
   border-left-color: #007bff;
 }
 
+.sidebar-slider {
+  margin-top: 20px;
+  width: 80%;
+  text-align: center;
+  color: #e0e0e0;
+}
+
+.sidebar-slider label {
+  display: block;
+  margin-bottom: 10px;
+  color: #e0e0e0;
+}
+
+.sidebar-slider input[type="range"] {
+  width: 100%;
+  cursor: pointer;
+}
+
 .main-content {
   flex-grow: 1;
   padding: 20px;
@@ -119,7 +137,6 @@ input:focus {
   word-wrap: break-word;
   white-space: pre-wrap; /* Ensures the text is wrapped correctly */
 }
-
 
 .main-container {
   padding-right: 20px;

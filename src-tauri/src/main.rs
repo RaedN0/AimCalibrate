@@ -24,9 +24,21 @@ struct UserSettings {
     game_fov: f64,
 }
 
+#[derive(Serialize)]
+struct AppSettings {
+    turn_speed: f32,
+}
+
 #[derive(Clone, serde::Serialize)]
 struct FovUpdatePayload {
     fov16: f64,
+}
+
+#[tauri::command]
+fn set_app_settings(turn_speed: Option<f32>, state: State<'_, Arc<Mutex<AppSettings>>>) {
+    let mut params = state.lock().unwrap();
+
+    params.turn_speed = turn_speed.unwrap_or(params.turn_speed);
 }
 
 #[tauri::command]
@@ -94,11 +106,13 @@ fn setup_global_shortcut(handle: AppHandle) {
             let state: State<Arc<Mutex<UserSettings>>> = app_handle.state();
             let mut app_state = app_state.lock().unwrap();
             let params = state.lock().unwrap();
+            let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
+            let settings_params = settings_state.lock().unwrap();
 
             match app_state.current_page.as_str() {
                 "main_sensitivity" => {
                     let counts = calculate_counts(params.cm360, params.dpi);
-                    move_mouse_by(counts, 50);
+                    move_mouse_by(counts, (50 as f32 / settings_params.turn_speed) as i32);
                 }
                 "scoped_sensitivity" => {
                     let counts = calculate_scoped_counts(
@@ -107,7 +121,7 @@ fn setup_global_shortcut(handle: AppHandle) {
                         params.normal_fov,
                         params.scoped_fov,
                     );
-                    move_mouse_by(counts, 50);
+                    move_mouse_by(counts, (50 as f32 / settings_params.turn_speed) as i32);
                 }
                 "measure_fov" => {
                     if app_state.tracker.tracking {
@@ -156,6 +170,7 @@ fn main() {
             current_page: "main_sensitivity".to_string(),
             tracker: MouseTracker::new(),
         })))
+        .manage(Arc::new(Mutex::new(AppSettings { turn_speed: 1.0 })))
         .setup(|app| {
             let window = app.get_window("main").unwrap();
             let hwnd = match window.hwnd() {
@@ -183,7 +198,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             set_user_settings,
             set_current_page,
-            get_initial_values
+            get_initial_values,
+            set_app_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
