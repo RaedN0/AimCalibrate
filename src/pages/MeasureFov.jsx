@@ -10,23 +10,25 @@ function MeasureFov() {
     const [cm360, setCm360] = useState(0);
     const [dpi, setDpi] = useState(0);
     const [gameSens, setGameSens] = useState(0);
-    const [fov16, setFov16] = useState(0);
-    const [fov43, setFov43] = useState(0);
-    const [fov11, setFov11] = useState(0);
+    const [fovHorizontal, setFovHorizontal] = useState(0);
+    const [fov4ML3, setFov4ML3] = useState(0);
+    const [fovVertical, setFovVertical] = useState(0);
+    const [aspectRatio, setAspectRatio] = useState(0);
 
     const isInitialMount = useRef(true);
 
     useEffect(() => {
         const fetchInitialValues = async () => {
             try {
+                getScreenAspectRatio();
                 await startListener();
                 const response = await invoke('get_initial_values');
                 setCm360(response.cm360);
                 setDpi(response.dpi);
                 setGameSens(response.game_sens);
-                setFov16(response.game_fov);
-                setFov43(horizontalToFourThree(response.game_fov));
-                setFov11(horizontalToOneOne(response.game_fov));
+                setFovHorizontal(response.game_fov);
+                setFov4ML3(horizontalTo4ML3(response.game_fov));
+                setFovVertical(horizontalToVertical(response.game_fov));
             } catch (error) {
                 console.error('Failed to fetch initial values:', error);
             }
@@ -50,9 +52,9 @@ function MeasureFov() {
         if (isInitialMount.current) {
             isInitialMount.current = false;
         } else {
-            updateSettings(cm360, dpi, gameSens, fov16);
+            updateSettings(cm360, dpi, gameSens, fovHorizontal);
         }
-    }, [cm360, dpi, gameSens, fov16]);
+    }, [cm360, dpi, gameSens, fovHorizontal]);
 
     async function startListener() {
         await listen('fov_update', (event) => {
@@ -64,41 +66,47 @@ function MeasureFov() {
 
     const handleFov16Change = (value) => {
         const newFov16 = parseFloat(value);
-        setFov16(newFov16);
-        setFov43(horizontalToFourThree(newFov16));
-        setFov11(horizontalToOneOne(newFov16));
+        setFovHorizontal(newFov16);
+        setFov4ML3(horizontalTo4ML3(newFov16));
+        setFovVertical(horizontalToVertical(newFov16));
     };
 
     const handleFov43Change = (value) => {
         const newFov43 = parseFloat(value);
-        const newFov16 = fourThreeToHorizontal(newFov43);
-        setFov16(newFov16);
-        setFov43(newFov43);
-        setFov11(horizontalToOneOne(newFov16));
+        const newFov16 = fov4ML3ToHorizontal(newFov43);
+        setFovHorizontal(newFov16);
+        setFov4ML3(newFov43);
+        setFovVertical(horizontalToVertical(newFov16));
     };
 
     const handleFov11Change = (value) => {
         const newFov11 = parseFloat(value);
-        const newFov16 = oneOneToHorizontal(newFov11);
-        setFov16(newFov16);
-        setFov43(horizontalToFourThree(newFov16));
-        setFov11(newFov11);
+        const newFov16 = verticalToHorizontal(newFov11);
+        setFovHorizontal(newFov16);
+        setFov4ML3(horizontalTo4ML3(newFov16));
+        setFovVertical(newFov11);
     };
 
-    const horizontalToFourThree = (fov) => {
-        return (2 * Math.atan(((Math.tan((fov / 2) * (Math.PI / 180))) * 3) / 4)) * (180 / Math.PI);
+    const horizontalToVertical = (fov) => {
+        return (2 * Math.atan(((Math.tan((fov / 2) * (Math.PI / 180))) * aspectRatio))) * (180 / Math.PI);
+    }
+
+    const verticalToHorizontal = (fov) => {
+        return 2 * Math.atan((Math.tan((fov / 2) * (Math.PI / 180)) / aspectRatio)) * (180 / Math.PI);
+    }
+
+    const horizontalTo4ML3 = (fov) => {
+        return 2 * Math.atan((aspectRatio / (3 / 4)) * Math.tan((fov / 2) * (Math.PI / 180))) * (180 / Math.PI);
     };
 
-    const horizontalToOneOne = (fov) => {
-        return (2 * Math.atan(((Math.tan((fov / 2) * (Math.PI / 180))) * 0.5625))) * (180 / Math.PI);
+    const fov4ML3ToHorizontal = (fov) => {
+        return 2 * Math.atan(((3 / 4) / aspectRatio) * Math.tan((fov / 2) * (Math.PI / 180))) * (180 / Math.PI);
     };
 
-    const fourThreeToHorizontal = (fov) => {
-        return 2 * Math.atan((Math.tan((fov / 2) * (Math.PI / 180)) * 4) / 3) * (180 / Math.PI);
-    };
-
-    const oneOneToHorizontal = (fov) => {
-        return 2 * Math.atan((Math.tan((fov / 2) * (Math.PI / 180)) / 0.5625)) * (180 / Math.PI);
+    const getScreenAspectRatio = () => {
+        const width = window.screen.width;
+        const height = window.screen.height;
+        setAspectRatio(height / width);
     };
 
     return (
@@ -108,7 +116,7 @@ function MeasureFov() {
                     data-tooltip-id="info-tooltip"
                     data-tooltip-content="This page lets you measure your FOV. Enter your cm/360 for hipfire, DPI, and your hipfire sensitivity. Scope in and line up something at the edge of your screen. Scope out, press F1, move your crosshair to the object you lined up, and press F1 again. Your FOV will then be displayed in the textboxes at the bottom. These can also be used to convert your FOV from one scale to the other two."
                     data-tooltip-place="left" className="info-icon"/>
-                <ReactTooltip id="info-tooltip" className="tooltip-box" />
+<ReactTooltip id="info-tooltip" className="tooltip-box" />
             </div>
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
@@ -142,32 +150,32 @@ function MeasureFov() {
             </div>
             <div className="fov-group">
                 <div className="input-group">
-                    <label htmlFor="fov16">16:9:</label>
+                    <label htmlFor="fovHorizontal">Horizontal:</label>
                     <input
                         type="number"
-                        id="fov16"
-                        name="fov16"
-                        value={fov16}
+                        id="fovHorizontal"
+                        name="fovHorizontal"
+                        value={fovHorizontal}
                         onChange={(e) => handleFov16Change(e.target.value)}
                     />
                 </div>
                 <div className="input-group">
-                    <label htmlFor="fov43">4:3:</label>
+                    <label htmlFor="fov4ML3">4ML3:</label>
                     <input
                         type="number"
-                        id="fov43"
-                        name="fov43"
-                        value={fov43}
+                        id="fov4ML3"
+                        name="fov4ML3"
+                        value={fov4ML3}
                         onChange={(e) => handleFov43Change(e.target.value)}
                     />
                 </div>
                 <div className="input-group">
-                    <label htmlFor="fov11">1:1:</label>
+                    <label htmlFor="fovVertical">Vertical:</label>
                     <input
                         type="number"
-                        id="fov11"
-                        name="fov11"
-                        value={fov11}
+                        id="fovVertical"
+                        name="fovVertical"
+                        value={fovVertical}
                         onChange={(e) => handleFov11Change(e.target.value)}
                     />
                 </div>
