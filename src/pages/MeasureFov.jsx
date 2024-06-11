@@ -1,10 +1,10 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {invoke} from '@tauri-apps/api/tauri';
 import debounce from 'lodash.debounce';
-import { listen } from '@tauri-apps/api/event';
-import { Tooltip as ReactTooltip } from 'react-tooltip';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import {listen} from '@tauri-apps/api/event';
+import {Tooltip as ReactTooltip} from 'react-tooltip';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faQuestionCircle} from '@fortawesome/free-solid-svg-icons';
 
 function MeasureFov() {
     const [cm360, setCm360] = useState(0);
@@ -58,7 +58,7 @@ function MeasureFov() {
 
     async function startListener() {
         await listen('fov_update', (event) => {
-            const { fov16 } = event.payload;
+            const {fov16} = event.payload;
             console.log("updated");
             handleFov16Change(fov16)
         });
@@ -111,12 +111,17 @@ function MeasureFov() {
 
     return (
         <div className="main-container">
+            <ReactTooltip id="info-tooltip" className="tooltip-box"/>
             <div className="info-container">
                 <FontAwesomeIcon icon={faQuestionCircle}
-                    data-tooltip-id="info-tooltip"
-                    data-tooltip-content="This page lets you measure your FOV. Enter your cm/360 for hipfire, DPI, and your hipfire sensitivity. Scope in and line up something at the edge of your screen. Scope out, press F1, move your crosshair to the object you lined up, and press F1 again. Your FOV will then be displayed in the textboxes at the bottom. These can also be used to convert your FOV from one scale to the other two."
-                    data-tooltip-place="left" className="info-icon"/>
-<ReactTooltip id="info-tooltip" className="tooltip-box" />
+                                 data-tooltip-id="info-tooltip"
+                                 data-tooltip-content="This page lets you measure your FOV.
+1. Enter your cm/360 for hipfire, DPI and game sensitivity for hipfire that matches the cm/360.
+2. Scope in and line up something at the edge of your screen.
+3. Scope out, press F1, move your crosshair to the object you lined up, and press F1 again.
+4. Your FOV will be displayed in the textboxes at the bottom. These can also be used to convert your FOV.
+IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen you game on, when switching to this tab. It looks at your aspect ratio of your screen, so if the screen you have AimCalibrate on, has another aspect ratio than the one you game on, the only correct value will be the horizontal one. The other two might be wrong."
+                                 data-tooltip-place="bottom" className="info-icon"/>
             </div>
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
@@ -126,6 +131,9 @@ function MeasureFov() {
                     name="cm360"
                     value={cm360}
                     onChange={(e) => setCm360(parseFloat(e.target.value))}
+                    data-tooltip-id="info-tooltip"
+                    data-tooltip-content="How many cm your mouse has to move to turn 360 degree."
+                    data-tooltip-place="bottom" className="info-icon"
                 />
             </div>
             <div className="input-group">
@@ -136,6 +144,9 @@ function MeasureFov() {
                     name="dpi"
                     value={dpi}
                     onChange={(e) => setDpi(parseInt(e.target.value))}
+                    data-tooltip-id="info-tooltip"
+                    data-tooltip-content="DPI of your mouse"
+                    data-tooltip-place="bottom" className="info-icon"
                 />
             </div>
             <div className="input-group">
@@ -146,6 +157,9 @@ function MeasureFov() {
                     name="gameSens"
                     value={gameSens}
                     onChange={(e) => setGameSens(parseFloat(e.target.value))}
+                    data-tooltip-id="info-tooltip"
+                    data-tooltip-content="Hipfire sensitivity that matches the cm/360"
+                    data-tooltip-place="bottom" className="info-icon"
                 />
             </div>
             <div className="fov-group">
@@ -157,6 +171,14 @@ function MeasureFov() {
                         name="fovHorizontal"
                         value={fovHorizontal}
                         onChange={(e) => handleFov16Change(e.target.value)}
+                        data-tooltip-id="info-tooltip"
+                        data-tooltip-content="Actual horizontal FOV.
+Games using this:
+- Overwatch
+- Valorant
+- xDefiant
+- The Finals"
+                        data-tooltip-place="top" className="info-icon"
                     />
                 </div>
                 <div className="input-group">
@@ -167,6 +189,13 @@ function MeasureFov() {
                         name="fov4ML3"
                         value={fov4ML3}
                         onChange={(e) => handleFov43Change(e.target.value)}
+                        data-tooltip-id="info-tooltip"
+                        data-tooltip-content="Horizontally measured, but vertically locked.
+Games using this:
+- CS2
+- Quake
+- Apex"
+                        data-tooltip-place="top" className="info-icon"
                     />
                 </div>
                 <div className="input-group">
@@ -177,6 +206,12 @@ function MeasureFov() {
                         name="fovVertical"
                         value={fovVertical}
                         onChange={(e) => handleFov11Change(e.target.value)}
+                        data-tooltip-id="info-tooltip"
+                        data-tooltip-content="Actual Vertical FOV.
+Games using this:
+- Battlefield
+- R6"
+                        data-tooltip-place="top-end" className="info-icon"
                     />
                 </div>
             </div>
