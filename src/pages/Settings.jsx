@@ -15,11 +15,20 @@ function Settings() {
 
     const handleKeyPress = (event) => {
         if (settingHotkey) {
+            event.preventDefault(); // Prevent default action to avoid conflicts
             const key = event.key;
-            const hotkeyString = `${key}`;
+            const ctrl = event.ctrlKey ? 'Ctrl+' : '';
+            const alt = event.altKey ? 'Alt+' : '';
+            const shift = event.shiftKey ? 'Shift+' : '';
+            const meta = event.metaKey ? 'Meta+' : '';
 
-            updateHotkey(hotkeyString);
-            setSettingHotkey(false);
+            // Only set a hotkey if it's not a modifier key by itself
+            if (key !== 'Control' && key !== 'Alt' && key !== 'Shift' && key !== 'Meta') {
+                const hotkeyString = `${ctrl}${alt}${shift}${meta}${key}`;
+
+                updateHotkey(hotkeyString);
+                setSettingHotkey(false);
+            }
         }
     };
 
