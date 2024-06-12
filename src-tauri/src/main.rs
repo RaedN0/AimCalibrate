@@ -1,7 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use enigo::{Enigo, MouseControllable};
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
+use std::fs;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
@@ -24,9 +26,10 @@ struct UserSettings {
     game_fov: f64,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Default)]
 struct AppSettings {
     turn_speed: f32,
+    hotkey: String
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -75,6 +78,24 @@ fn get_initial_values(state: State<'_, Arc<Mutex<UserSettings>>>) -> UserSetting
 }
 
 #[tauri::command]
+fn set_hotkey(new_hotkey: String, state: State<'_, Arc<Mutex<AppSettings>>>, app_handle: AppHandle) {
+    {
+        let mut params = state.lock().unwrap();
+        params.hotkey = new_hotkey;
+    }
+    save_app_settings(state).expect("Failed to save settings");
+    // Re-register the global shortcut with the new hotkey
+    setup_global_shortcut(app_handle);
+}
+
+#[tauri::command]
+fn get_hotkey(state: State<'_, Arc<Mutex<AppSettings>>>) -> String {
+    let params = state.lock().unwrap();
+    params.hotkey.clone()
+}
+
+
+#[tauri::command]
 fn set_current_page(page: String, state: State<'_, Arc<Mutex<AppState>>>) {
     let mut app_state = state.lock().unwrap();
     app_state.current_page = page;
@@ -96,12 +117,18 @@ fn move_mouse_by(mut x: i32, steps: i32) {
 }
 
 fn setup_global_shortcut(handle: AppHandle) {
+    let state: State<Arc<Mutex<AppSettings>>> = handle.state();
+    let params = state.lock().unwrap();
+    let hotkey = params.hotkey.clone();
+
     let mut global_shortcut_manager = handle.global_shortcut_manager();
 
     let app_handle = handle.clone();
 
+    global_shortcut_manager.unregister_all().unwrap(); // Unregister any existing shortcuts
+
     global_shortcut_manager
-        .register("F1", move || {
+        .register(&hotkey, move || {
             let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
             let state: State<Arc<Mutex<UserSettings>>> = app_handle.state();
             let mut app_state = app_state.lock().unwrap();
@@ -149,14 +176,45 @@ fn setup_global_shortcut(handle: AppHandle) {
                     }
                 }
                 _ => {
-                    println!("F1 pressed on unknown page");
+                    println!("Hotkey pressed on unknown page");
                 }
             }
         })
         .unwrap();
 }
 
+fn save_app_settings(state: State<Arc<Mutex<AppSettings>>>) -> Result<(), Box<dyn std::error::Error>> {
+    let settings = state.lock().unwrap();
+    let path = get_settings_path();
+    let data = serde_json::to_string(&*settings)?;
+    fs::write(path, data)?;
+    Ok(())
+}
+
+fn load_app_settings() -> Result<AppSettings, Box<dyn std::error::Error>> {
+    let path = get_settings_path();
+    if path.exists() {
+        let data = fs::read_to_string(path)?;
+        let mut settings: AppSettings = serde_json::from_str(&data)?;
+        if settings.hotkey == "" || settings.hotkey == "Unidentified" {
+            settings.hotkey = "F1".to_string();
+        }
+        println!("{}", data);
+        Ok(settings)
+    } else {
+        Ok(AppSettings::default())
+    }
+}
+
+fn get_settings_path() -> PathBuf {
+    tauri::api::path::app_config_dir(&tauri::Config::default())
+        .expect("Failed to get config directory")
+        .join("settings.json")
+}
+
+
 fn main() {
+    let app_settings = load_app_settings().expect("Failed to load settings");
     tauri::Builder::default()
         .manage(Arc::new(Mutex::new(UserSettings {
             cm360: 0.0,
@@ -170,7 +228,7 @@ fn main() {
             current_page: "main_sensitivity".to_string(),
             tracker: MouseTracker::new(),
         })))
-        .manage(Arc::new(Mutex::new(AppSettings { turn_speed: 1.0 })))
+        .manage(Arc::new(Mutex::new(app_settings)))
         .setup(|app| {
             let window = app.get_window("main").unwrap();
             let hwnd = match window.hwnd() {
@@ -199,7 +257,9 @@ fn main() {
             set_user_settings,
             set_current_page,
             get_initial_values,
-            set_app_settings
+            set_app_settings,
+        set_hotkey,
+        get_hotkey
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
