@@ -57,6 +57,27 @@ body {
   border-left-color: #007bff;
 }
 
+.sidebar-settings {
+  margin-top: auto; /* Push this container to the bottom */
+  width: 100%;
+  text-align: center;
+}
+
+.sidebar-settings a {
+  text-decoration: none;
+  color: #e0e0e0;
+  padding: 10px 20px;
+  display: block;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.sidebar-settings a.active,
+.sidebar-settings a:hover {
+  background-color: #333333;
+  border-left-color: #007bff;
+}
+
 .sidebar-slider {
   margin-top: 20px;
   width: 80%;

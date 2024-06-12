@@ -33,10 +33,10 @@ function App() {
                         <li>
                             <NavLink to="/measure-fov" onClick={() => setPage("measure_fov")}>Measure FOV</NavLink>
                         </li>
-                        <li>
-                            <NavLink to="/settings" onClick={() => setPage("settings")}>Settings</NavLink>
-                        </li>
                     </ul>
+                    <div className="sidebar-settings">
+                        <NavLink to="/settings" onClick={() => setPage("settings")}>Settings</NavLink>
+                    </div>
                 </div>
                 <div className="main-content">
                     <Routes>
