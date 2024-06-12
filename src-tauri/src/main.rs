@@ -195,7 +195,11 @@ fn load_app_settings() -> Result<AppSettings, Box<dyn std::error::Error>> {
     let path = get_settings_path();
     if path.exists() {
         let data = fs::read_to_string(path)?;
-        let settings: AppSettings = serde_json::from_str(&data)?;
+        let mut settings: AppSettings = serde_json::from_str(&data)?;
+        if settings.hotkey == "" || settings.hotkey == "Unidentified" {
+            settings.hotkey = "F1".to_string();
+        }
+        println!("{}", data);
         Ok(settings)
     } else {
         Ok(AppSettings::default())

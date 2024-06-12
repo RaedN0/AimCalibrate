@@ -66,13 +66,13 @@ function Settings() {
                     {settingHotkey ? 'Press any key...' : 'Set Hotkey'}
                 </button>
             </div>
-            <div className="sidebar-slider">
+            <div className="slider">
                 <label htmlFor="sensitivity-slider">Turn speed: {sliderValue}</label>
                 <input
                     type="range"
                     id="sensitivity-slider"
                     min="0.1"
-                    max="2"
+                    max="5"
                     step="0.1"
                     value={sliderValue}
                     onChange={handleSliderChange}
