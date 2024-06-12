@@ -78,7 +78,6 @@ fn get_initial_values(state: State<'_, Arc<Mutex<UserSettings>>>) -> UserSetting
 #[tauri::command]
 fn set_hotkey(new_hotkey: String, state: State<'_, Arc<Mutex<AppSettings>>>, app_handle: AppHandle) {
     {
-        println!("{}", new_hotkey);
         let mut params = state.lock().unwrap();
         params.hotkey = new_hotkey;
     }

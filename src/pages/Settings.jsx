@@ -33,14 +33,12 @@ function Settings() {
     };
 
     return (
-        <div
-            tabIndex="0"
-            onKeyDown={handleKeyPress}
-            style={{outline: 'none'}}
-        >
-            <h1>Set Hotkey</h1>
-            <h2>Current Hotkey: {hotkey}</h2>
-            <button onClick={() => setSettingHotkey(true)}>
+        <div className="keybind-container" tabIndex="0"
+             onKeyDown={handleKeyPress}>
+            <div className="current-keybind">
+                Current Hotkey: {hotkey}
+            </div>
+            <button className="keybind-button" onClick={() => setSettingHotkey(true)}>
                 {settingHotkey ? 'Press any key...' : 'Set Hotkey'}
             </button>
         </div>
