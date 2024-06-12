@@ -5,26 +5,32 @@ import debounce from 'lodash/debounce';
 function Settings() {
     const [hotkey, setHotkey] = useState('');
     const [settingHotkey, setSettingHotkey] = useState(false);
-
-    useEffect(() => {
-        invoke('get_hotkey').then((hotkey) => setHotkey(hotkey));
-    }, []);
-
     const [sliderValue, setSliderValue] = useState(1);
 
     useEffect(() => {
-        debouncedUpdateSettings(sliderValue)
-    }, [sliderValue]);
+        const fetchInitialValues = async () => {
+            try {
+                const response = await invoke('get_app_settings');
+                setSliderValue(response.turn_speed.toFixed(1));
+                setHotkey(response.hotkey);
+            } catch (error) {
+                console.error('Failed to fetch initial values:', error);
+            }
+        };
 
-    const handleSliderChange = (event) => {
-        setSliderValue(event.target.value);
-    };
+        fetchInitialValues();
+    }, []);
+
+    useEffect(() => {
+        debouncedUpdateSettings(sliderValue, hotkey)
+    }, [hotkey, sliderValue]);
 
     const debouncedUpdateSettings = useCallback(
-        debounce((sliderValue) => {
-            console.log(sliderValue);
+        debounce((sliderValue, hotkey) => {
+            console.log(hotkey);
             invoke('set_app_settings', {
-                turnSpeed: parseFloat(sliderValue)
+                turnSpeed: parseFloat(sliderValue),
+                hotkey: hotkey
             }).catch((error) => {
                 console.error('Failed to set user settings:', error);
             });
@@ -32,8 +38,12 @@ function Settings() {
         []
     );
 
+    const handleSliderChange = (event) => {
+        setSliderValue(event.target.value);
+    };
+
     const updateHotkey = (newHotkey) => {
-        invoke('set_hotkey', {newHotkey}).then(() => setHotkey(newHotkey));
+        setHotkey(newHotkey)
     };
 
     const handleKeyPress = (event) => {

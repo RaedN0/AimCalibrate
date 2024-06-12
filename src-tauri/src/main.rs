@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use enigo::{Enigo, MouseControllable};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -29,7 +29,7 @@ struct UserSettings {
 #[derive(Serialize, Deserialize, Default)]
 struct AppSettings {
     turn_speed: f32,
-    hotkey: String
+    hotkey: String,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -38,10 +38,31 @@ struct FovUpdatePayload {
 }
 
 #[tauri::command]
-fn set_app_settings(turn_speed: Option<f32>, state: State<'_, Arc<Mutex<AppSettings>>>) {
-    let mut params = state.lock().unwrap();
+fn set_app_settings(
+    turn_speed: Option<f32>,
+    hotkey: Option<String>,
+    state: State<'_, Arc<Mutex<AppSettings>>>,
+    app_handle: AppHandle,
+) {
+    {
+        let mut params = state.lock().unwrap();
 
-    params.turn_speed = turn_speed.unwrap_or(params.turn_speed);
+        params.turn_speed = turn_speed.unwrap_or(params.turn_speed);
+        params.hotkey = hotkey.unwrap_or(params.hotkey.clone());
+    }
+
+    save_app_settings(state.clone()).expect("Failed to save Settings");
+
+    setup_global_shortcut(app_handle);
+}
+
+#[tauri::command]
+fn get_app_settings(state: State<'_, Arc<Mutex<AppSettings>>>) -> AppSettings {
+    let params = state.lock().unwrap();
+    AppSettings {
+        turn_speed: params.turn_speed,
+        hotkey: params.hotkey.clone(),
+    }
 }
 
 #[tauri::command]
@@ -76,24 +97,6 @@ fn get_initial_values(state: State<'_, Arc<Mutex<UserSettings>>>) -> UserSetting
         game_fov: params.game_fov,
     }
 }
-
-#[tauri::command]
-fn set_hotkey(new_hotkey: String, state: State<'_, Arc<Mutex<AppSettings>>>, app_handle: AppHandle) {
-    {
-        let mut params = state.lock().unwrap();
-        params.hotkey = new_hotkey;
-    }
-    save_app_settings(state).expect("Failed to save settings");
-    // Re-register the global shortcut with the new hotkey
-    setup_global_shortcut(app_handle);
-}
-
-#[tauri::command]
-fn get_hotkey(state: State<'_, Arc<Mutex<AppSettings>>>) -> String {
-    let params = state.lock().unwrap();
-    params.hotkey.clone()
-}
-
 
 #[tauri::command]
 fn set_current_page(page: String, state: State<'_, Arc<Mutex<AppState>>>) {
@@ -183,7 +186,9 @@ fn setup_global_shortcut(handle: AppHandle) {
         .unwrap();
 }
 
-fn save_app_settings(state: State<Arc<Mutex<AppSettings>>>) -> Result<(), Box<dyn std::error::Error>> {
+fn save_app_settings(
+    state: State<Arc<Mutex<AppSettings>>>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let settings = state.lock().unwrap();
     let path = get_settings_path();
     let data = serde_json::to_string(&*settings)?;
@@ -199,7 +204,6 @@ fn load_app_settings() -> Result<AppSettings, Box<dyn std::error::Error>> {
         if settings.hotkey == "" || settings.hotkey == "Unidentified" {
             settings.hotkey = "F1".to_string();
         }
-        println!("{}", data);
         Ok(settings)
     } else {
         Ok(AppSettings::default())
@@ -211,7 +215,6 @@ fn get_settings_path() -> PathBuf {
         .expect("Failed to get config directory")
         .join("settings.json")
 }
-
 
 fn main() {
     let app_settings = load_app_settings().expect("Failed to load settings");
@@ -258,8 +261,7 @@ fn main() {
             set_current_page,
             get_initial_values,
             set_app_settings,
-        set_hotkey,
-        get_hotkey
+            get_app_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
