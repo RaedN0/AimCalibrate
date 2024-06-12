@@ -27,6 +27,7 @@ struct UserSettings {
 #[derive(Serialize)]
 struct AppSettings {
     turn_speed: f32,
+    hotkey: String
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -75,6 +76,24 @@ fn get_initial_values(state: State<'_, Arc<Mutex<UserSettings>>>) -> UserSetting
 }
 
 #[tauri::command]
+fn set_hotkey(new_hotkey: String, state: State<'_, Arc<Mutex<AppSettings>>>, app_handle: AppHandle) {
+    {
+        println!("{}", new_hotkey);
+        let mut params = state.lock().unwrap();
+        params.hotkey = new_hotkey;
+    }
+    // Re-register the global shortcut with the new hotkey
+    setup_global_shortcut(app_handle);
+}
+
+#[tauri::command]
+fn get_hotkey(state: State<'_, Arc<Mutex<AppSettings>>>) -> String {
+    let params = state.lock().unwrap();
+    params.hotkey.clone()
+}
+
+
+#[tauri::command]
 fn set_current_page(page: String, state: State<'_, Arc<Mutex<AppState>>>) {
     let mut app_state = state.lock().unwrap();
     app_state.current_page = page;
@@ -96,12 +115,18 @@ fn move_mouse_by(mut x: i32, steps: i32) {
 }
 
 fn setup_global_shortcut(handle: AppHandle) {
+    let state: State<Arc<Mutex<AppSettings>>> = handle.state();
+    let params = state.lock().unwrap();
+    let hotkey = params.hotkey.clone();
+
     let mut global_shortcut_manager = handle.global_shortcut_manager();
 
     let app_handle = handle.clone();
 
+    global_shortcut_manager.unregister_all().unwrap(); // Unregister any existing shortcuts
+
     global_shortcut_manager
-        .register("F1", move || {
+        .register(&hotkey, move || {
             let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
             let state: State<Arc<Mutex<UserSettings>>> = app_handle.state();
             let mut app_state = app_state.lock().unwrap();
@@ -149,12 +174,13 @@ fn setup_global_shortcut(handle: AppHandle) {
                     }
                 }
                 _ => {
-                    println!("F1 pressed on unknown page");
+                    println!("Hotkey pressed on unknown page");
                 }
             }
         })
         .unwrap();
 }
+
 
 fn main() {
     tauri::Builder::default()
@@ -170,7 +196,7 @@ fn main() {
             current_page: "main_sensitivity".to_string(),
             tracker: MouseTracker::new(),
         })))
-        .manage(Arc::new(Mutex::new(AppSettings { turn_speed: 1.0 })))
+        .manage(Arc::new(Mutex::new(AppSettings { turn_speed: 1.0, hotkey: "F1".to_string() })))
         .setup(|app| {
             let window = app.get_window("main").unwrap();
             let hwnd = match window.hwnd() {
@@ -199,7 +225,9 @@ fn main() {
             set_user_settings,
             set_current_page,
             get_initial_values,
-            set_app_settings
+            set_app_settings,
+        set_hotkey,
+        get_hotkey
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

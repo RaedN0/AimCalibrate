@@ -6,6 +6,7 @@ import './App.css';
 import MainSensitivity from './pages/MainSensitivity';
 import ScopedSensitivity from './pages/ScopedSensitivity';
 import MeasureFov from './pages/MeasureFov';
+import Settings from "./pages/Settings.jsx";
 import logo from '/acLogo.png'; // Adjust the path based on your project structure
 
 function App() {
@@ -53,6 +54,9 @@ function App() {
                         <li>
                             <NavLink to="/measure-fov" onClick={() => setPage("measure_fov")}>Measure FOV</NavLink>
                         </li>
+                        <li>
+                            <NavLink to="/settings" onClick={() => setPage("settings")}>Settings</NavLink>
+                        </li>
                     </ul>
                     <div className="sidebar-slider">
                         <label htmlFor="sensitivity-slider">Turn speed: {sliderValue}</label>
@@ -72,6 +76,7 @@ function App() {
                         <Route path="/" element={<MainSensitivity/>}/>
                         <Route path="/scoped-sensitivity" element={<ScopedSensitivity/>}/>
                         <Route path="/measure-fov" element={<MeasureFov/>}/>
+                        <Route path="/settings" element={<Settings />} />
                     </Routes>
                 </div>
             </div>
