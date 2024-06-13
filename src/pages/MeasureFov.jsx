@@ -13,14 +13,12 @@ function MeasureFov() {
     const [fovHorizontal, setFovHorizontal] = useState(0);
     const [fov4ML3, setFov4ML3] = useState(0);
     const [fovVertical, setFovVertical] = useState(0);
-    const [aspectRatio, setAspectRatio] = useState(0);
 
     const isInitialMount = useRef(true);
 
     useEffect(() => {
         const fetchInitialValues = async () => {
             try {
-                getScreenAspectRatio();
                 await startListener();
                 const response = await invoke('get_initial_values');
                 setCm360(response.cm360);
@@ -87,25 +85,19 @@ function MeasureFov() {
     };
 
     const horizontalToVertical = (fov) => {
-        return (2 * Math.atan(((Math.tan((fov / 2) * (Math.PI / 180))) * aspectRatio))) * (180 / Math.PI);
+        return (2 * Math.atan(((Math.tan((fov / 2) * (Math.PI / 180))) * (window.screen.height / window.screen.width)))) * (180 / Math.PI);
     }
 
     const verticalToHorizontal = (fov) => {
-        return 2 * Math.atan((Math.tan((fov / 2) * (Math.PI / 180)) / aspectRatio)) * (180 / Math.PI);
+        return 2 * Math.atan((Math.tan((fov / 2) * (Math.PI / 180)) / (window.screen.height / window.screen.width))) * (180 / Math.PI);
     }
 
     const horizontalTo4ML3 = (fov) => {
-        return 2 * Math.atan((aspectRatio / (3 / 4)) * Math.tan((fov / 2) * (Math.PI / 180))) * (180 / Math.PI);
+        return 2 * Math.atan(((window.screen.height / window.screen.width) / (3 / 4)) * Math.tan((fov / 2) * (Math.PI / 180))) * (180 / Math.PI);
     };
 
     const fov4ML3ToHorizontal = (fov) => {
-        return 2 * Math.atan(((3 / 4) / aspectRatio) * Math.tan((fov / 2) * (Math.PI / 180))) * (180 / Math.PI);
-    };
-
-    const getScreenAspectRatio = () => {
-        const width = window.screen.width;
-        const height = window.screen.height;
-        setAspectRatio(height / width);
+        return 2 * Math.atan(((3 / 4) / (window.screen.height / window.screen.width)) * Math.tan((fov / 2) * (Math.PI / 180))) * (180 / Math.PI);
     };
 
     return (
