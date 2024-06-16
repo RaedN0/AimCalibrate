@@ -26,10 +26,19 @@ struct UserSettings {
     game_fov: f64,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 struct AppSettings {
     turn_speed: f32,
     hotkey: String,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        AppSettings {
+            turn_speed: 1.0, // Set your desired default turn speed
+            hotkey: "F1".to_string(), // Set your desired default hotkey
+        }
+    }
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -206,15 +215,25 @@ fn load_app_settings() -> Result<AppSettings, Box<dyn std::error::Error>> {
         }
         Ok(settings)
     } else {
-        Ok(AppSettings::default())
+        let default_settings = AppSettings::default();
+        let data = serde_json::to_string(&default_settings)?;
+        fs::write(&path, data)?;
+        Ok(default_settings)
     }
 }
 
 fn get_settings_path() -> PathBuf {
-    tauri::api::path::app_config_dir(&tauri::Config::default())
+    let config_dir = tauri::api::path::app_config_dir(&tauri::Config::default())
         .expect("Failed to get config directory")
-        .join("settings.json")
+        .join("AimCalibrate");
+
+    if !config_dir.exists() {
+        fs::create_dir_all(&config_dir).expect("Failed to create config directory");
+    }
+
+    config_dir.join("settings.json")
 }
+
 
 fn main() {
     let app_settings = load_app_settings().expect("Failed to load settings");
