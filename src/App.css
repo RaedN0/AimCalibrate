@@ -180,6 +180,16 @@ input:focus {
   border-radius: 5px;
 }
 
+.limits-group {
+  display: flex;
+  justify-content: space-between;
+}
+
+.limits-group .input-group {
+  flex: 1;
+  max-width: 40%;
+}
+
 .keybind-container {
   display: flex;
   flex-direction: column;

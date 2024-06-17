@@ -29,17 +29,24 @@ struct UserSettings {
 #[derive(Serialize, Deserialize)]
 struct AppSettings {
     turn_speed: f32,
-    hotkey: String,
+    hotkey1: String,
+    hotkey2: String,
+    hotkey3: String,
+    hotkey4: String,
 }
 
 impl Default for AppSettings {
     fn default() -> Self {
         AppSettings {
-            turn_speed: 1.0, // Set your desired default turn speed
-            hotkey: "F1".to_string(), // Set your desired default hotkey
+            turn_speed: 1.0,
+            hotkey1: "F1".to_string(),
+            hotkey2: "F2".to_string(),
+            hotkey3: "F3".to_string(),
+            hotkey4: "F4".to_string(),
         }
     }
 }
+
 
 #[derive(Clone, serde::Serialize)]
 struct FovUpdatePayload {
@@ -49,7 +56,10 @@ struct FovUpdatePayload {
 #[tauri::command]
 fn set_app_settings(
     turn_speed: Option<f32>,
-    hotkey: Option<String>,
+    hotkey1: Option<String>,
+    hotkey2: Option<String>,
+    hotkey3: Option<String>,
+    hotkey4: Option<String>,
     state: State<'_, Arc<Mutex<AppSettings>>>,
     app_handle: AppHandle,
 ) {
@@ -57,7 +67,10 @@ fn set_app_settings(
         let mut params = state.lock().unwrap();
 
         params.turn_speed = turn_speed.unwrap_or(params.turn_speed);
-        params.hotkey = hotkey.unwrap_or(params.hotkey.clone());
+        params.hotkey1 = hotkey1.unwrap_or(params.hotkey1.clone());
+        params.hotkey2 = hotkey2.unwrap_or(params.hotkey2.clone());
+        params.hotkey3 = hotkey3.unwrap_or(params.hotkey3.clone());
+        params.hotkey4 = hotkey4.unwrap_or(params.hotkey4.clone());
     }
 
     save_app_settings(state.clone()).expect("Failed to save Settings");
@@ -65,14 +78,19 @@ fn set_app_settings(
     setup_global_shortcut(app_handle);
 }
 
+
 #[tauri::command]
 fn get_app_settings(state: State<'_, Arc<Mutex<AppSettings>>>) -> AppSettings {
     let params = state.lock().unwrap();
     AppSettings {
         turn_speed: params.turn_speed,
-        hotkey: params.hotkey.clone(),
+        hotkey1: params.hotkey1.clone(),
+        hotkey2: params.hotkey2.clone(),
+        hotkey3: params.hotkey3.clone(),
+        hotkey4: params.hotkey4.clone(),
     }
 }
+
 
 #[tauri::command]
 fn set_user_settings(
@@ -131,7 +149,10 @@ fn move_mouse_by(mut x: i32, steps: i32) {
 fn setup_global_shortcut(handle: AppHandle) {
     let state: State<Arc<Mutex<AppSettings>>> = handle.state();
     let params = state.lock().unwrap();
-    let hotkey = params.hotkey.clone();
+    let hotkey1 = params.hotkey1.clone();
+    let hotkey2 = params.hotkey2.clone();
+    let hotkey3 = params.hotkey3.clone();
+    let hotkey4 = params.hotkey4.clone();
 
     let mut global_shortcut_manager = handle.global_shortcut_manager();
 
@@ -140,7 +161,7 @@ fn setup_global_shortcut(handle: AppHandle) {
     global_shortcut_manager.unregister_all().unwrap(); // Unregister any existing shortcuts
 
     global_shortcut_manager
-        .register(&hotkey, move || {
+        .register(&hotkey1, move || {
             let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
             let state: State<Arc<Mutex<UserSettings>>> = app_handle.state();
             let mut app_state = app_state.lock().unwrap();
@@ -193,6 +214,13 @@ fn setup_global_shortcut(handle: AppHandle) {
             }
         })
         .unwrap();
+
+    global_shortcut_manager
+        .register(&hotkey2, move || {
+            println!("Hotkey2 action here");
+            // Implement your custom action for the second hotkey here
+        })
+        .unwrap();
 }
 
 fn save_app_settings(
@@ -210,8 +238,14 @@ fn load_app_settings() -> Result<AppSettings, Box<dyn std::error::Error>> {
     if path.exists() {
         let data = fs::read_to_string(path)?;
         let mut settings: AppSettings = serde_json::from_str(&data)?;
-        if settings.hotkey == "" || settings.hotkey == "Unidentified" {
-            settings.hotkey = "F1".to_string();
+        if settings.hotkey1 == "" || settings.hotkey1 == "Unidentified" {
+            settings.hotkey1 = "F1".to_string();
+        }
+        if settings.hotkey2 == "" || settings.hotkey2 == "Unidentified" {
+            settings.hotkey2 = "F2".to_string();
+        }
+        if settings.hotkey3 == "" || settings.hotkey3 == "Unidentified" {
+            settings.hotkey3 = "F3".to_string();
         }
         Ok(settings)
     } else {
@@ -221,6 +255,7 @@ fn load_app_settings() -> Result<AppSettings, Box<dyn std::error::Error>> {
         Ok(default_settings)
     }
 }
+
 
 fn get_settings_path() -> PathBuf {
     let config_dir = tauri::api::path::app_config_dir(&tauri::Config::default())
@@ -233,7 +268,6 @@ fn get_settings_path() -> PathBuf {
 
     config_dir.join("settings.json")
 }
-
 
 fn main() {
     let app_settings = load_app_settings().expect("Failed to load settings");
