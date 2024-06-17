@@ -48,7 +48,7 @@ impl Default for AppSettings {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct YawStuff {
     sens: f64,
     counts: i32,
@@ -209,6 +209,8 @@ fn setup_global_shortcut(handle: AppHandle) {
             let params = state.lock().unwrap();
             let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
             let settings_params = settings_state.lock().unwrap();
+            let yaw_state: State<Arc<Mutex<YawStuff>>> = app_handle.state();
+            let yaw_params = yaw_state.lock().unwrap();
 
             match app_state.current_page.as_str() {
                 "main_sensitivity" => {
@@ -250,7 +252,30 @@ fn setup_global_shortcut(handle: AppHandle) {
                     }
                 }
                 "measure_yaw" => {
-                    println!("hallo");
+                    if app_state.tracker.tracking {
+                        app_state.tracker.stop_tracking().unwrap();
+
+                        app_handle
+                            .emit_all(
+                                "yaw_update",
+                                YawStuff {
+                                    sens: yaw_params.sens,
+                                    counts: app_state.tracker.count,
+                                    inc: yaw_params.inc,
+                                    yaw: yaw_params.yaw,
+                                    lower_limit: yaw_params.lower_limit,
+                                    upper_limit: yaw_params.upper_limit,
+                                },
+                            )
+                            .unwrap();
+                    } else {
+                        let window = app_handle.get_window("main").unwrap();
+                        let hwnd = match window.hwnd() {
+                            Ok(hwnd) => hwnd.0 as HWND,
+                            Err(_) => panic!("Failed to get window handle"),
+                        };
+                        app_state.tracker.start_tracking(hwnd).unwrap();
+                    }
                 }
                 _ => {
                     println!("Hotkey pressed on unknown page");
@@ -334,7 +359,7 @@ fn main() {
             inc: 0.0,
             yaw: 0.0,
             lower_limit: 0.0,
-            upper_limit: 1000.0
+            upper_limit: 1000.0,
         })))
         .setup(|app| {
             let window = app.get_window("main").unwrap();

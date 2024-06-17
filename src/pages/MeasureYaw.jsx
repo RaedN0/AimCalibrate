@@ -10,6 +10,7 @@ function MeasureFov() {
     const [sens, setSens] = useState(0);
     const [yaw, setYaw] = useState(0);
     const [counts, setCounts] = useState(0);
+    const [inc, setInc] = useState(0);
     const [lowerLimit, setLowerLimit] = useState(0);
     const [upperLimit, setUpperLimit] = useState(0);
 
@@ -18,6 +19,7 @@ function MeasureFov() {
     useEffect(() => {
         const fetchInitialValues = async () => {
             try {
+                startListener();
                 const response = await invoke('get_yaw_stuff');
                 setSens(response.sens);
                 setCounts(response.counts);
@@ -31,6 +33,18 @@ function MeasureFov() {
 
         fetchInitialValues();
     }, []);
+
+    async function startListener() {
+        await listen('yaw_update', (event) => {
+            console.log(event.payload)
+            setSens(event.payload.sens);
+            setCounts(event.payload.counts);
+            setInc(event.payload.inc);
+            setYaw(event.payload.yaw);
+            setLowerLimit(event.payload.lower_limit);
+            setUpperLimit(event.payload.upper_limit);
+        });
+    }
 
     return (
         <div className="main-container">
@@ -67,6 +81,19 @@ IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen yo
                     name="yaw"
                     value={yaw}
                     onChange={(e) => setYaw(parseInt(e.target.value))}
+                    data-tooltip-id="info-tooltip"
+                    data-tooltip-content="DPI of your mouse"
+                    data-tooltip-place="bottom" className="info-icon"
+                />
+            </div>
+            <div className="input-group">
+                <label htmlFor="counts">Counts:</label>
+                <input
+                    type="number"
+                    id="counts"
+                    name="counts"
+                    value={counts}
+                    onChange={(e) => setCounts(parseInt(e.target.value))}
                     data-tooltip-id="info-tooltip"
                     data-tooltip-content="DPI of your mouse"
                     data-tooltip-place="bottom" className="info-icon"
