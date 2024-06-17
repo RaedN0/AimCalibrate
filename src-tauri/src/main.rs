@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
 use winapi::shared::windef::HWND;
+use winapi::um::winnt::PMCCounter;
 use winapi::um::winuser::{SetWindowLongPtrW, GWLP_WNDPROC};
 
 mod mouse_tracker;
@@ -54,7 +55,7 @@ struct YawStuff {
     inc: f64,
     yaw: f64,
     lower_limit: f64,
-    upper_limit: f64
+    upper_limit: f64,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -87,7 +88,6 @@ fn set_app_settings(
     setup_global_shortcut(app_handle);
 }
 
-
 #[tauri::command]
 fn get_app_settings(state: State<'_, Arc<Mutex<AppSettings>>>) -> AppSettings {
     let params = state.lock().unwrap();
@@ -100,6 +100,38 @@ fn get_app_settings(state: State<'_, Arc<Mutex<AppSettings>>>) -> AppSettings {
     }
 }
 
+#[tauri::command]
+fn set_yaw_stuff(
+    sens: Option<f64>,
+    counts: Option<i32>,
+    inc: Option<f64>,
+    yaw: Option<f64>,
+    lower_limit: Option<f64>,
+    upper_limit: Option<f64>,
+    state: State<'_, Arc<Mutex<YawStuff>>>,
+) {
+    let mut params = state.lock().unwrap();
+
+    params.sens = sens.unwrap_or(params.sens);
+    params.counts = counts.unwrap_or(params.counts);
+    params.inc = inc.unwrap_or(params.inc);
+    params.yaw = yaw.unwrap_or(params.yaw);
+    params.lower_limit = lower_limit.unwrap_or(params.lower_limit);
+    params.upper_limit = upper_limit.unwrap_or(params.upper_limit);
+}
+
+#[tauri::command]
+fn get_yaw_stuff(state: State<'_, Arc<Mutex<YawStuff>>>) -> YawStuff {
+    let params = state.lock().unwrap();
+    YawStuff {
+        sens: params.sens,
+        counts: params.counts,
+        inc: params.inc,
+        yaw: params.yaw,
+        lower_limit: params.lower_limit,
+        upper_limit: params.upper_limit,
+    }
+}
 
 #[tauri::command]
 fn set_user_settings(
@@ -217,6 +249,9 @@ fn setup_global_shortcut(handle: AppHandle) {
                         app_state.tracker.start_tracking(hwnd).unwrap();
                     }
                 }
+                "measure_yaw" => {
+                    println!("hallo");
+                }
                 _ => {
                     println!("Hotkey pressed on unknown page");
                 }
@@ -265,7 +300,6 @@ fn load_app_settings() -> Result<AppSettings, Box<dyn std::error::Error>> {
     }
 }
 
-
 fn get_settings_path() -> PathBuf {
     let config_dir = tauri::api::path::app_config_dir(&tauri::Config::default())
         .expect("Failed to get config directory")
@@ -294,6 +328,14 @@ fn main() {
             tracker: MouseTracker::new(),
         })))
         .manage(Arc::new(Mutex::new(app_settings)))
+        .manage(Arc::new(Mutex::new(YawStuff {
+            sens: 0.0,
+            counts: 0,
+            inc: 0.0,
+            yaw: 0.0,
+            lower_limit: 0.0,
+            upper_limit: 1000.0
+        })))
         .setup(|app| {
             let window = app.get_window("main").unwrap();
             let hwnd = match window.hwnd() {
@@ -323,7 +365,9 @@ fn main() {
             set_current_page,
             get_initial_values,
             set_app_settings,
-            get_app_settings
+            get_app_settings,
+            set_yaw_stuff,
+            get_yaw_stuff
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

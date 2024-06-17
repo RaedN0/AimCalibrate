@@ -9,11 +9,28 @@ import {faQuestionCircle} from '@fortawesome/free-solid-svg-icons';
 function MeasureFov() {
     const [sens, setSens] = useState(0);
     const [yaw, setYaw] = useState(0);
+    const [counts, setCounts] = useState(0);
     const [lowerLimit, setLowerLimit] = useState(0);
     const [upperLimit, setUpperLimit] = useState(0);
-    const [fovVertical, setFovVertical] = useState(0);
 
     const isInitialMount = useRef(true);
+
+    useEffect(() => {
+        const fetchInitialValues = async () => {
+            try {
+                const response = await invoke('get_yaw_stuff');
+                setSens(response.sens);
+                setCounts(response.counts);
+                setYaw(response.yaw);
+                setLowerLimit(response.lower_limit);
+                setUpperLimit(response.upper_limit);
+            } catch (error) {
+                console.error('Failed to fetch initial values:', error);
+            }
+        };
+
+        fetchInitialValues();
+    }, []);
 
     return (
         <div className="main-container">
