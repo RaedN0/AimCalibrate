@@ -34,6 +34,22 @@ function MeasureFov() {
         fetchInitialValues();
     }, []);
 
+    const updateSettings = debounce(async (sens) => {
+        console.log("Updateing")
+        try {
+            const response = await invoke('set_yaw_stuff', {
+                sens: parseFloat(sens)
+            })
+            console.log(response);
+            setSens(response.sens);
+            setYaw(response.yaw);
+            setLowerLimit(response.lower_limit);
+            setUpperLimit(response.upper_limit);
+        } catch (error) {
+            console.error('Failed to set user settings:', error);
+        }
+    }, 500);
+
     async function startListener() {
         await listen('yaw_update', (event) => {
             console.log(event.payload)
@@ -51,14 +67,14 @@ function MeasureFov() {
             <ReactTooltip id="info-tooltip" className="tooltip-box"/>
             <div className="info-container">
                 <FontAwesomeIcon icon={faQuestionCircle}
-                                data-tooltip-id="info-tooltip"
-                                data-tooltip-content="This page lets you measure your FOV.
+                                 data-tooltip-id="info-tooltip"
+                                 data-tooltip-content="This page lets you measure your FOV.
 1. Enter your cm/360 for hipfire, DPI and game sensitivity for hipfire that matches the cm/360.
 2. Scope in and line up something at the edge of your screen.
 3. Scope out, press F1, move your crosshair to the object you lined up, and press F1 again.
 4. Your FOV will be displayed in the textboxes at the bottom. These can also be used to convert your FOV.
 IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen you game on, when switching to this tab. It looks at your aspect ratio of your screen, so if the screen you have AimCalibrate on, has another aspect ratio than the one you game on, the only correct value will be the horizontal one. The other two might be wrong."
-                                data-tooltip-place="bottom" className="info-icon"/>
+                                 data-tooltip-place="bottom" className="info-icon"/>
             </div>
             <div className="input-group">
                 <label htmlFor="sens">Sens:</label>
@@ -67,7 +83,7 @@ IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen yo
                     id="sens"
                     name="sens"
                     value={sens}
-                    onChange={(e) => setSens(parseFloat(e.target.value))}
+                    onChange={(e) => updateSettings(parseFloat(e.target.value))}
                     data-tooltip-id="info-tooltip"
                     data-tooltip-content="How many cm your mouse has to move to turn 360 degree."
                     data-tooltip-place="bottom" className="info-icon"
@@ -80,7 +96,7 @@ IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen yo
                     id="yaw"
                     name="yaw"
                     value={yaw}
-                    onChange={(e) => setYaw(parseInt(e.target.value))}
+                    readOnly
                     data-tooltip-id="info-tooltip"
                     data-tooltip-content="DPI of your mouse"
                     data-tooltip-place="bottom" className="info-icon"
@@ -93,7 +109,7 @@ IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen yo
                     id="counts"
                     name="counts"
                     value={counts}
-                    onChange={(e) => setCounts(parseInt(e.target.value))}
+                    readOnly
                     data-tooltip-id="info-tooltip"
                     data-tooltip-content="DPI of your mouse"
                     data-tooltip-place="bottom" className="info-icon"
@@ -107,7 +123,7 @@ IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen yo
                         id="lower"
                         name="lower"
                         value={lowerLimit}
-                        onChange={(e) => setLowerLimit(e.target.value)}
+                        readOnly
                         data-tooltip-id="info-tooltip"
                         data-tooltip-content="Actual horizontal FOV.
 Games using this:
@@ -125,7 +141,7 @@ Games using this:
                         id="upper"
                         name="upper"
                         value={upperLimit}
-                        onChange={(e) => setUpperLimit(e.target.value)}
+                        readOnly
                         data-tooltip-id="info-tooltip"
                         data-tooltip-content="Horizontally measured, but vertically locked.
 Games using this:

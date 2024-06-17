@@ -103,21 +103,23 @@ fn get_app_settings(state: State<'_, Arc<Mutex<AppSettings>>>) -> AppSettings {
 #[tauri::command]
 fn set_yaw_stuff(
     sens: Option<f64>,
-    counts: Option<i32>,
-    inc: Option<f64>,
-    yaw: Option<f64>,
-    lower_limit: Option<f64>,
-    upper_limit: Option<f64>,
     state: State<'_, Arc<Mutex<YawStuff>>>,
-) {
+) -> YawStuff {
     let mut params = state.lock().unwrap();
 
     params.sens = sens.unwrap_or(params.sens);
-    params.counts = counts.unwrap_or(params.counts);
-    params.inc = inc.unwrap_or(params.inc);
-    params.yaw = yaw.unwrap_or(params.yaw);
-    params.lower_limit = lower_limit.unwrap_or(params.lower_limit);
-    params.upper_limit = upper_limit.unwrap_or(params.upper_limit);
+    params.yaw = params.inc / params.sens;
+    params.lower_limit = params.yaw * 0.9;
+    params.upper_limit = params.yaw * 1.1;
+
+    YawStuff {
+        sens: params.sens,
+        counts: params.counts,
+        inc: params.inc,
+        yaw: params.yaw,
+        lower_limit: params.lower_limit,
+        upper_limit: params.upper_limit,
+    }
 }
 
 #[tauri::command]
@@ -210,7 +212,7 @@ fn setup_global_shortcut(handle: AppHandle) {
             let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
             let settings_params = settings_state.lock().unwrap();
             let yaw_state: State<Arc<Mutex<YawStuff>>> = app_handle.state();
-            let yaw_params = yaw_state.lock().unwrap();
+            let mut yaw_params = yaw_state.lock().unwrap();
 
             match app_state.current_page.as_str() {
                 "main_sensitivity" => {
@@ -255,12 +257,18 @@ fn setup_global_shortcut(handle: AppHandle) {
                     if app_state.tracker.tracking {
                         app_state.tracker.stop_tracking().unwrap();
 
+                        yaw_params.counts = app_state.tracker.count;
+                        yaw_params.inc = 360.0 / yaw_params.counts as f64;
+                        yaw_params.yaw = yaw_params.inc / yaw_params.sens;
+                        yaw_params.lower_limit = yaw_params.yaw * 0.9;
+                        yaw_params.upper_limit = yaw_params.yaw * 1.1;
+
                         app_handle
                             .emit_all(
                                 "yaw_update",
                                 YawStuff {
                                     sens: yaw_params.sens,
-                                    counts: app_state.tracker.count,
+                                    counts: yaw_params.counts,
                                     inc: yaw_params.inc,
                                     yaw: yaw_params.yaw,
                                     lower_limit: yaw_params.lower_limit,
@@ -354,7 +362,7 @@ fn main() {
         })))
         .manage(Arc::new(Mutex::new(app_settings)))
         .manage(Arc::new(Mutex::new(YawStuff {
-            sens: 0.0,
+            sens: 1.0,
             counts: 0,
             inc: 0.0,
             yaw: 0.0,
