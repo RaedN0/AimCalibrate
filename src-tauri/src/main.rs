@@ -47,6 +47,15 @@ impl Default for AppSettings {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+struct YawStuff {
+    sens: f64,
+    counts: i32,
+    inc: f64,
+    yaw: f64,
+    lower_limit: f64,
+    upper_limit: f64
+}
 
 #[derive(Clone, serde::Serialize)]
 struct FovUpdatePayload {
