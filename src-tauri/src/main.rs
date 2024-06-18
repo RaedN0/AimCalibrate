@@ -277,8 +277,6 @@ fn setup_global_shortcut(handle: AppHandle) {
                         yaw_params.lower_limit = yaw_params.yaw * 0.9;
                         yaw_params.upper_limit = yaw_params.yaw * 1.1;
 
-                        println!("{}", yaw_params.lower_limit);
-
                         app_handle
                             .emit_all(
                                 "yaw_update",
@@ -318,10 +316,13 @@ fn setup_global_shortcut(handle: AppHandle) {
             let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
             let settings_params = settings_state.lock().unwrap();
 
+            let yaw_state: State<Arc<Mutex<YawStuff>>> = app_handle.state();
+            let yaw_params = yaw_state.lock().unwrap();
+
             match app_state.current_page.as_str() {
                 "measure_yaw" => {
                     move_mouse_by(
-                        app_state.tracker.count,
+                        yaw_params.counts,
                         (50 as f32 / settings_params.turn_speed) as i32,
                         true,
                     );
@@ -349,7 +350,7 @@ fn setup_global_shortcut(handle: AppHandle) {
             match app_state.current_page.as_str() {
                 "measure_yaw" => {
                     move_mouse_by(
-                        app_state.tracker.count,
+                        yaw_params.counts,
                         (50 as f32 / settings_params.turn_speed) as i32,
                         false,
                     );
@@ -396,7 +397,7 @@ fn setup_global_shortcut(handle: AppHandle) {
             match app_state.current_page.as_str() {
                 "measure_yaw" => {
                     move_mouse_by(
-                        app_state.tracker.count,
+                        yaw_params.counts,
                         (50 as f32 / settings_params.turn_speed) as i32,
                         false,
                     );
