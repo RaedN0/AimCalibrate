@@ -34,21 +34,19 @@ function MeasureFov() {
         fetchInitialValues();
     }, []);
 
-    const updateSettings = debounce(async (sens) => {
-        console.log("Updateing")
+    const handleSensChange = async (sens) => {
+        setSens(sens);
         try {
             const response = await invoke('set_yaw_stuff', {
-                sens: parseFloat(sens)
-            })
-            console.log(response);
-            setSens(response.sens);
+                sens: sens
+            });
             setYaw(response.yaw);
             setLowerLimit(response.lower_limit);
             setUpperLimit(response.upper_limit);
         } catch (error) {
             console.error('Failed to set user settings:', error);
         }
-    }, 500);
+    };
 
     async function startListener() {
         await listen('yaw_update', (event) => {
@@ -83,7 +81,7 @@ IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen yo
                     id="sens"
                     name="sens"
                     value={sens}
-                    onChange={(e) => updateSettings(parseFloat(e.target.value))}
+                    onChange={(e) => handleSensChange(parseFloat(e.target.value))}
                     data-tooltip-id="info-tooltip"
                     data-tooltip-content="How many cm your mouse has to move to turn 360 degree."
                     data-tooltip-place="bottom" className="info-icon"
