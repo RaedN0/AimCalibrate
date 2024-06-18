@@ -183,6 +183,7 @@ input:focus {
 .limits-group {
   display: flex;
   justify-content: space-between;
+  max-width: 340px;
 }
 
 .limits-group .input-group {

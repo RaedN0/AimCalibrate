@@ -1,6 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {invoke} from '@tauri-apps/api/tauri';
-import debounce from 'lodash.debounce';
 import {listen} from '@tauri-apps/api/event';
 import {Tooltip as ReactTooltip} from 'react-tooltip';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
@@ -10,7 +9,6 @@ function MeasureFov() {
     const [sens, setSens] = useState(0);
     const [yaw, setYaw] = useState(0);
     const [counts, setCounts] = useState(0);
-    const [inc, setInc] = useState(0);
     const [lowerLimit, setLowerLimit] = useState(0);
     const [upperLimit, setUpperLimit] = useState(0);
 
