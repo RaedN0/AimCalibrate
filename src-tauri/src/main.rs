@@ -252,7 +252,7 @@ fn setup_global_shortcut(handle: AppHandle) {
                         let fov = estimate_fov(
                             params.game_sens,
                             calculate_yaw(counts as i32, params.game_sens),
-                            app_state.tracker.count,
+                            app_state.tracker.count.abs(),
                         );
 
                         app_handle
@@ -271,7 +271,7 @@ fn setup_global_shortcut(handle: AppHandle) {
                     if app_state.tracker.tracking {
                         app_state.tracker.stop_tracking().unwrap();
 
-                        yaw_params.counts = app_state.tracker.count;
+                        yaw_params.counts = app_state.tracker.count.abs();
                         yaw_params.inc = 360.0 / yaw_params.counts as f64;
                         yaw_params.yaw = yaw_params.inc / yaw_params.sens;
                         yaw_params.lower_limit = yaw_params.yaw * 0.9;

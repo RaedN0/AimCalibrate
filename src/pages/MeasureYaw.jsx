@@ -64,12 +64,12 @@ function MeasureFov() {
             <div className="info-container">
                 <FontAwesomeIcon icon={faQuestionCircle}
                                  data-tooltip-id="info-tooltip"
-                                 data-tooltip-content="This page lets you measure your FOV.
-1. Enter your cm/360 for hipfire, DPI and game sensitivity for hipfire that matches the cm/360.
-2. Scope in and line up something at the edge of your screen.
-3. Scope out, press F1, move your crosshair to the object you lined up, and press F1 again.
-4. Your FOV will be displayed in the textboxes at the bottom. These can also be used to convert your FOV.
-IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen you game on, when switching to this tab. It looks at your aspect ratio of your screen, so if the screen you have AimCalibrate on, has another aspect ratio than the one you game on, the only correct value will be the horizontal one. The other two might be wrong."
+                                 data-tooltip-content="This page lets you measure the yaw value of a game.
+1. Enter your game sensitivity.
+2. Press hotkey 1, turn 360 degrees and press hotkey 1 again.
+3. Press hotkey 2 to turn.
+4. If you turned less than 360 degrees, press hotkey 3, if you turned more than 360 degrees press hotkey 4.
+5. Repeat step 3 and 4 until it turns exactly 360 degrees. The value shown in the textbox is the yaw value"
                                  data-tooltip-place="bottom" className="info-icon"/>
             </div>
             <div className="input-group">
@@ -81,7 +81,7 @@ IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen yo
                     value={sens}
                     onChange={(e) => handleSensChange(parseFloat(e.target.value))}
                     data-tooltip-id="info-tooltip"
-                    data-tooltip-content="How many cm your mouse has to move to turn 360 degree."
+                    data-tooltip-content="Your sensitivity in the game you want to meaasure"
                     data-tooltip-place="bottom" className="info-icon"
                 />
             </div>
@@ -94,7 +94,7 @@ IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen yo
                     value={yaw}
                     readOnly
                     data-tooltip-id="info-tooltip"
-                    data-tooltip-content="DPI of your mouse"
+                    data-tooltip-content="Estimated yaw value of the game"
                     data-tooltip-place="bottom" className="info-icon"
                 />
             </div>
@@ -107,7 +107,7 @@ IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen yo
                     value={counts}
                     readOnly
                     data-tooltip-id="info-tooltip"
-                    data-tooltip-content="DPI of your mouse"
+                    data-tooltip-content="Mouse movement counts to turn 360 degrees"
                     data-tooltip-place="bottom" className="info-icon"
                 />
             </div>
@@ -121,12 +121,7 @@ IMPORTANT: For the conversion to be accurate, have AimCalibrate on the screen yo
                         value={lowerLimit}
                         readOnly
                         data-tooltip-id="info-tooltip"
-                        data-tooltip-content="Actual horizontal FOV.
-Games using this:
-- Overwatch
-- Valorant
-- xDefiant
-- The Finals"
+                        data-tooltip-content="Minimum possible yaw value"
                         data-tooltip-place="top" className="info-icon"
                     />
                 </div>
@@ -139,11 +134,7 @@ Games using this:
                         value={upperLimit}
                         readOnly
                         data-tooltip-id="info-tooltip"
-                        data-tooltip-content="Horizontally measured, but vertically locked.
-Games using this:
-- CS2
-- Quake
-- Apex"
+                        data-tooltip-content="Maximum possible yaw value"
                         data-tooltip-place="top" className="info-icon"
                     />
                 </div>
