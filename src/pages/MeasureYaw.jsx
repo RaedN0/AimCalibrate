@@ -19,6 +19,7 @@ function MeasureFov() {
             try {
                 startListener();
                 const response = await invoke('get_yaw_stuff');
+                console.log(response);
                 setSens(response.sens);
                 setCounts(response.counts);
                 setYaw(response.yaw);
@@ -51,7 +52,6 @@ function MeasureFov() {
             console.log(event.payload)
             setSens(event.payload.sens);
             setCounts(event.payload.counts);
-            setInc(event.payload.inc);
             setYaw(event.payload.yaw);
             setLowerLimit(event.payload.lower_limit);
             setUpperLimit(event.payload.upper_limit);

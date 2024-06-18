@@ -277,6 +277,8 @@ fn setup_global_shortcut(handle: AppHandle) {
                         yaw_params.lower_limit = yaw_params.yaw * 0.9;
                         yaw_params.upper_limit = yaw_params.yaw * 1.1;
 
+                        println!("{}", yaw_params.lower_limit);
+
                         app_handle
                             .emit_all(
                                 "yaw_update",
