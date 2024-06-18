@@ -101,10 +101,7 @@ fn get_app_settings(state: State<'_, Arc<Mutex<AppSettings>>>) -> AppSettings {
 }
 
 #[tauri::command]
-fn set_yaw_stuff(
-    sens: Option<f64>,
-    state: State<'_, Arc<Mutex<YawStuff>>>,
-) -> YawStuff {
+fn set_yaw_stuff(sens: Option<f64>, state: State<'_, Arc<Mutex<YawStuff>>>) -> YawStuff {
     let mut params = state.lock().unwrap();
 
     params.sens = sens.unwrap_or(params.sens);
@@ -174,17 +171,26 @@ fn set_current_page(page: String, state: State<'_, Arc<Mutex<AppState>>>) {
     app_state.current_page = page;
 }
 
-fn move_mouse_by(mut x: i32, steps: i32) {
+fn move_mouse_by(mut x: i32, steps: i32, right: bool) {
     let mut enigo = Enigo::new();
 
     let step_count = x / steps;
     while x > 0 {
-        if x > step_count {
-            enigo.mouse_move_relative(step_count, 0);
+        if right == true {
+            if x > step_count {
+                enigo.mouse_move_relative(step_count, 0);
+            } else {
+                enigo.mouse_move_relative(x, 0);
+            }
+            x -= step_count;
         } else {
-            enigo.mouse_move_relative(x, 0);
+            if x > step_count {
+                enigo.mouse_move_relative(-step_count, 0);
+            } else {
+                enigo.mouse_move_relative(-x, 0);
+            }
+            x -= step_count;
         }
-        x -= step_count;
         std::thread::sleep(Duration::from_millis(10));
     }
 }
@@ -217,7 +223,11 @@ fn setup_global_shortcut(handle: AppHandle) {
             match app_state.current_page.as_str() {
                 "main_sensitivity" => {
                     let counts = calculate_counts(params.cm360, params.dpi);
-                    move_mouse_by(counts, (50 as f32 / settings_params.turn_speed) as i32);
+                    move_mouse_by(
+                        counts,
+                        (50 as f32 / settings_params.turn_speed) as i32,
+                        true,
+                    );
                 }
                 "scoped_sensitivity" => {
                     let counts = calculate_scoped_counts(
@@ -226,7 +236,11 @@ fn setup_global_shortcut(handle: AppHandle) {
                         params.normal_fov,
                         params.scoped_fov,
                     );
-                    move_mouse_by(counts, (50 as f32 / settings_params.turn_speed) as i32);
+                    move_mouse_by(
+                        counts,
+                        (50 as f32 / settings_params.turn_speed) as i32,
+                        true,
+                    );
                 }
                 "measure_fov" => {
                     if app_state.tracker.tracking {
@@ -292,10 +306,122 @@ fn setup_global_shortcut(handle: AppHandle) {
         })
         .unwrap();
 
+    let app_handle = handle.clone();
+
     global_shortcut_manager
         .register(&hotkey2, move || {
-            println!("Hotkey2 action here");
-            // Implement your custom action for the second hotkey here
+            let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
+            let app_state = app_state.lock().unwrap();
+
+            let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
+            let settings_params = settings_state.lock().unwrap();
+
+            match app_state.current_page.as_str() {
+                "measure_yaw" => {
+                    move_mouse_by(
+                        app_state.tracker.count,
+                        (50 as f32 / settings_params.turn_speed) as i32,
+                        true,
+                    );
+                }
+                _ => {
+                    println!("Hotkey pressed on unknown page");
+                }
+            }
+        })
+        .unwrap();
+
+    let app_handle = handle.clone();
+
+    global_shortcut_manager
+        .register(&hotkey3, move || {
+            let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
+            let app_state = app_state.lock().unwrap();
+
+            let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
+            let settings_params = settings_state.lock().unwrap();
+
+            let yaw_state: State<Arc<Mutex<YawStuff>>> = app_handle.state();
+            let mut yaw_params = yaw_state.lock().unwrap();
+
+            match app_state.current_page.as_str() {
+                "measure_yaw" => {
+                    move_mouse_by(
+                        app_state.tracker.count,
+                        (50 as f32 / settings_params.turn_speed) as i32,
+                        false,
+                    );
+
+                    yaw_params.upper_limit = yaw_params.yaw;
+                    yaw_params.yaw = (yaw_params.upper_limit + yaw_params.lower_limit) / 2.0;
+                    yaw_params.inc = yaw_params.sens * yaw_params.yaw;
+                    yaw_params.counts = (360.0 / yaw_params.inc).round() as i32;
+
+                    app_handle
+                        .emit_all(
+                            "yaw_update",
+                            YawStuff {
+                                sens: yaw_params.sens,
+                                counts: yaw_params.counts,
+                                inc: yaw_params.inc,
+                                yaw: yaw_params.yaw,
+                                lower_limit: yaw_params.lower_limit,
+                                upper_limit: yaw_params.upper_limit,
+                            },
+                        )
+                        .unwrap();
+                }
+                _ => {
+                    println!("Hotkey pressed on unknown page");
+                }
+            }
+        })
+        .unwrap();
+
+    let app_handle = handle.clone();
+
+    global_shortcut_manager
+        .register(&hotkey4, move || {
+            let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
+            let app_state = app_state.lock().unwrap();
+
+            let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
+            let settings_params = settings_state.lock().unwrap();
+
+            let yaw_state: State<Arc<Mutex<YawStuff>>> = app_handle.state();
+            let mut yaw_params = yaw_state.lock().unwrap();
+
+            match app_state.current_page.as_str() {
+                "measure_yaw" => {
+                    move_mouse_by(
+                        app_state.tracker.count,
+                        (50 as f32 / settings_params.turn_speed) as i32,
+                        false,
+                    );
+
+                    yaw_params.lower_limit = yaw_params.yaw;
+                    yaw_params.yaw = (yaw_params.upper_limit + yaw_params.lower_limit) / 2.0;
+                    yaw_params.inc = yaw_params.sens * yaw_params.yaw;
+                    yaw_params.counts = (360.0 / yaw_params.inc).round() as i32;
+
+                    app_handle
+                        .emit_all(
+                            "yaw_update",
+                            YawStuff {
+                                sens: yaw_params.sens,
+                                counts: yaw_params.counts,
+                                inc: yaw_params.inc,
+                                yaw: yaw_params.yaw,
+                                lower_limit: yaw_params.lower_limit,
+                                upper_limit: yaw_params.upper_limit,
+                            },
+                        )
+                        .unwrap();
+                }
+                _ => {
+                    println!("Hotkey pressed on unknown page");
+                }
+            }
         })
         .unwrap();
 }
