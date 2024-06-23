@@ -260,3 +260,14 @@ input:focus {
   width: 80%;
   cursor: pointer;
 }
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.button-container button {
+  width: 50%;
+}
