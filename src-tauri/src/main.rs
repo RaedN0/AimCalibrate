@@ -17,6 +17,22 @@ use mouse_tracker::{AppState, MouseTracker, APP_STATE};
 mod calculations;
 use calculations::{calculate_counts, calculate_scoped_counts, calculate_yaw, estimate_fov};
 
+#[derive(Serialize, Deserialize, Clone)]
+struct YawStuff {
+    sens: f64,
+    counts: i32,
+    inc: f64,
+    yaw: f64,
+    lower_limit: f64,
+    upper_limit: f64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct GameYaw {
+    name: String,
+    yaw: f64,
+}
+
 #[derive(Serialize)]
 struct UserSettings {
     cm360: f64,
@@ -46,16 +62,6 @@ impl Default for AppSettings {
             hotkey4: "F4".to_string(),
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-struct YawStuff {
-    sens: f64,
-    counts: i32,
-    inc: f64,
-    yaw: f64,
-    lower_limit: f64,
-    upper_limit: f64,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -130,6 +136,23 @@ fn get_yaw_stuff(state: State<'_, Arc<Mutex<YawStuff>>>) -> YawStuff {
         lower_limit: params.lower_limit,
         upper_limit: params.upper_limit,
     }
+}
+
+#[tauri::command]
+fn save_game_yaw(name: String, state: State<'_, Arc<Mutex<YawStuff>>>) {
+    let params = state.lock().unwrap();
+    let game_yaw = GameYaw {
+        name,
+        yaw: params.yaw,
+    };
+
+    let path = get_yaw_file_path();
+    let mut game_yaws = load_yaw_data(&path).unwrap_or_default();
+
+    game_yaws.push(game_yaw);
+
+    save_yaw_data(&path, &game_yaws).expect("Failed to save yaw data");
+    println!("Game yaw data saved successfully.");
 }
 
 #[tauri::command]
@@ -474,6 +497,34 @@ fn get_settings_path() -> PathBuf {
     config_dir.join("settings.json")
 }
 
+fn get_yaw_file_path() -> PathBuf {
+    let config_dir = tauri::api::path::app_config_dir(&tauri::Config::default())
+        .expect("Failed to get config directory")
+        .join("AimCalibrate");
+
+    if !config_dir.exists() {
+        fs::create_dir_all(&config_dir).expect("Failed to create config directory");
+    }
+
+    config_dir.join("Games.json")
+}
+
+fn load_yaw_data(path: &PathBuf) -> Result<Vec<GameYaw>, Box<dyn std::error::Error>> {
+    if path.exists() {
+        let data = fs::read_to_string(path)?;
+        let game_yaws: Vec<GameYaw> = serde_json::from_str(&data)?;
+        Ok(game_yaws)
+    } else {
+        Ok(vec![])
+    }
+}
+
+fn save_yaw_data(path: &PathBuf, game_yaws: &Vec<GameYaw>) -> Result<(), Box<dyn std::error::Error>> {
+    let data = serde_json::to_string(game_yaws)?;
+    fs::write(path, data)?;
+    Ok(())
+}
+
 fn main() {
     let app_settings = load_app_settings().expect("Failed to load settings");
     tauri::Builder::default()
@@ -529,7 +580,8 @@ fn main() {
             set_app_settings,
             get_app_settings,
             set_yaw_stuff,
-            get_yaw_stuff
+            get_yaw_stuff,
+            save_game_yaw
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

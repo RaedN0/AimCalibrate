@@ -58,7 +58,6 @@ function MeasureYaw() {
         await listen('yaw_update', (event) => {
             console.log(event.payload);
             setSens(event.payload.sens);
-            setCounts(event.payload.counts);
             setYaw(event.payload.yaw);
             setLowerLimit(event.payload.lower_limit);
             setUpperLimit(event.payload.upper_limit);
@@ -71,6 +70,9 @@ function MeasureYaw() {
     const handleDialogSave = () => {
         // Save the dialog text here
         console.log('Dialog text saved:', dialogText);
+        invoke('save_game_yaw', {
+            name: dialogText
+        })
         closeDialog();
     };
 
