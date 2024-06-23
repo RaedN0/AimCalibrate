@@ -4,7 +4,7 @@ use enigo::{Enigo, MouseControllable};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
 use winapi::shared::windef::HWND;
