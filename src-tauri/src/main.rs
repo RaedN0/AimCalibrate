@@ -4,10 +4,11 @@ use enigo::{Enigo, MouseControllable};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
 use winapi::shared::windef::HWND;
+use winapi::um::winnt::PMCCounter;
 use winapi::um::winuser::{SetWindowLongPtrW, GWLP_WNDPROC};
 
 mod mouse_tracker;
@@ -15,6 +16,22 @@ use mouse_tracker::{AppState, MouseTracker, APP_STATE};
 
 mod calculations;
 use calculations::{calculate_counts, calculate_scoped_counts, calculate_yaw, estimate_fov};
+
+#[derive(Serialize, Deserialize, Clone)]
+struct YawStuff {
+    sens: f64,
+    counts: i32,
+    inc: f64,
+    yaw: f64,
+    lower_limit: f64,
+    upper_limit: f64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct GameYaw {
+    name: String,
+    yaw: f64,
+}
 
 #[derive(Serialize)]
 struct UserSettings {
@@ -29,14 +46,20 @@ struct UserSettings {
 #[derive(Serialize, Deserialize)]
 struct AppSettings {
     turn_speed: f32,
-    hotkey: String,
+    hotkey1: String,
+    hotkey2: String,
+    hotkey3: String,
+    hotkey4: String,
 }
 
 impl Default for AppSettings {
     fn default() -> Self {
         AppSettings {
-            turn_speed: 1.0, // Set your desired default turn speed
-            hotkey: "F1".to_string(), // Set your desired default hotkey
+            turn_speed: 1.0,
+            hotkey1: "F1".to_string(),
+            hotkey2: "F2".to_string(),
+            hotkey3: "F3".to_string(),
+            hotkey4: "F4".to_string(),
         }
     }
 }
@@ -49,7 +72,10 @@ struct FovUpdatePayload {
 #[tauri::command]
 fn set_app_settings(
     turn_speed: Option<f32>,
-    hotkey: Option<String>,
+    hotkey1: Option<String>,
+    hotkey2: Option<String>,
+    hotkey3: Option<String>,
+    hotkey4: Option<String>,
     state: State<'_, Arc<Mutex<AppSettings>>>,
     app_handle: AppHandle,
 ) {
@@ -57,7 +83,10 @@ fn set_app_settings(
         let mut params = state.lock().unwrap();
 
         params.turn_speed = turn_speed.unwrap_or(params.turn_speed);
-        params.hotkey = hotkey.unwrap_or(params.hotkey.clone());
+        params.hotkey1 = hotkey1.unwrap_or(params.hotkey1.clone());
+        params.hotkey2 = hotkey2.unwrap_or(params.hotkey2.clone());
+        params.hotkey3 = hotkey3.unwrap_or(params.hotkey3.clone());
+        params.hotkey4 = hotkey4.unwrap_or(params.hotkey4.clone());
     }
 
     save_app_settings(state.clone()).expect("Failed to save Settings");
@@ -70,8 +99,60 @@ fn get_app_settings(state: State<'_, Arc<Mutex<AppSettings>>>) -> AppSettings {
     let params = state.lock().unwrap();
     AppSettings {
         turn_speed: params.turn_speed,
-        hotkey: params.hotkey.clone(),
+        hotkey1: params.hotkey1.clone(),
+        hotkey2: params.hotkey2.clone(),
+        hotkey3: params.hotkey3.clone(),
+        hotkey4: params.hotkey4.clone(),
     }
+}
+
+#[tauri::command]
+fn set_yaw_stuff(sens: Option<f64>, state: State<'_, Arc<Mutex<YawStuff>>>) -> YawStuff {
+    let mut params = state.lock().unwrap();
+
+    params.sens = sens.unwrap_or(params.sens);
+    params.yaw = params.inc / params.sens;
+    params.lower_limit = params.yaw * 0.9;
+    params.upper_limit = params.yaw * 1.1;
+
+    YawStuff {
+        sens: params.sens,
+        counts: params.counts,
+        inc: params.inc,
+        yaw: params.yaw,
+        lower_limit: params.lower_limit,
+        upper_limit: params.upper_limit,
+    }
+}
+
+#[tauri::command]
+fn get_yaw_stuff(state: State<'_, Arc<Mutex<YawStuff>>>) -> YawStuff {
+    let params = state.lock().unwrap();
+    YawStuff {
+        sens: params.sens,
+        counts: params.counts,
+        inc: params.inc,
+        yaw: params.yaw,
+        lower_limit: params.lower_limit,
+        upper_limit: params.upper_limit,
+    }
+}
+
+#[tauri::command]
+fn save_game_yaw(name: String, state: State<'_, Arc<Mutex<YawStuff>>>) {
+    let params = state.lock().unwrap();
+    let game_yaw = GameYaw {
+        name,
+        yaw: params.yaw,
+    };
+
+    let path = get_yaw_file_path();
+    let mut game_yaws = load_yaw_data(&path).unwrap_or_default();
+
+    game_yaws.push(game_yaw);
+
+    save_yaw_data(&path, &game_yaws).expect("Failed to save yaw data");
+    println!("Game yaw data saved successfully.");
 }
 
 #[tauri::command]
@@ -113,17 +194,26 @@ fn set_current_page(page: String, state: State<'_, Arc<Mutex<AppState>>>) {
     app_state.current_page = page;
 }
 
-fn move_mouse_by(mut x: i32, steps: i32) {
+fn move_mouse_by(mut x: i32, steps: i32, right: bool) {
     let mut enigo = Enigo::new();
 
     let step_count = x / steps;
     while x > 0 {
-        if x > step_count {
-            enigo.mouse_move_relative(step_count, 0);
+        if right == true {
+            if x > step_count {
+                enigo.mouse_move_relative(step_count, 0);
+            } else {
+                enigo.mouse_move_relative(x, 0);
+            }
+            x -= step_count;
         } else {
-            enigo.mouse_move_relative(x, 0);
+            if x > step_count {
+                enigo.mouse_move_relative(-step_count, 0);
+            } else {
+                enigo.mouse_move_relative(-x, 0);
+            }
+            x -= step_count;
         }
-        x -= step_count;
         std::thread::sleep(Duration::from_millis(10));
     }
 }
@@ -131,7 +221,10 @@ fn move_mouse_by(mut x: i32, steps: i32) {
 fn setup_global_shortcut(handle: AppHandle) {
     let state: State<Arc<Mutex<AppSettings>>> = handle.state();
     let params = state.lock().unwrap();
-    let hotkey = params.hotkey.clone();
+    let hotkey1 = params.hotkey1.clone();
+    let hotkey2 = params.hotkey2.clone();
+    let hotkey3 = params.hotkey3.clone();
+    let hotkey4 = params.hotkey4.clone();
 
     let mut global_shortcut_manager = handle.global_shortcut_manager();
 
@@ -140,18 +233,24 @@ fn setup_global_shortcut(handle: AppHandle) {
     global_shortcut_manager.unregister_all().unwrap(); // Unregister any existing shortcuts
 
     global_shortcut_manager
-        .register(&hotkey, move || {
+        .register(&hotkey1, move || {
             let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
             let state: State<Arc<Mutex<UserSettings>>> = app_handle.state();
             let mut app_state = app_state.lock().unwrap();
             let params = state.lock().unwrap();
             let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
             let settings_params = settings_state.lock().unwrap();
+            let yaw_state: State<Arc<Mutex<YawStuff>>> = app_handle.state();
+            let mut yaw_params = yaw_state.lock().unwrap();
 
             match app_state.current_page.as_str() {
                 "main_sensitivity" => {
                     let counts = calculate_counts(params.cm360, params.dpi);
-                    move_mouse_by(counts, (50 as f32 / settings_params.turn_speed) as i32);
+                    move_mouse_by(
+                        counts,
+                        (50 as f32 / settings_params.turn_speed) as i32,
+                        true,
+                    );
                 }
                 "scoped_sensitivity" => {
                     let counts = calculate_scoped_counts(
@@ -160,7 +259,11 @@ fn setup_global_shortcut(handle: AppHandle) {
                         params.normal_fov,
                         params.scoped_fov,
                     );
-                    move_mouse_by(counts, (50 as f32 / settings_params.turn_speed) as i32);
+                    move_mouse_by(
+                        counts,
+                        (50 as f32 / settings_params.turn_speed) as i32,
+                        true,
+                    );
                 }
                 "measure_fov" => {
                     if app_state.tracker.tracking {
@@ -172,7 +275,7 @@ fn setup_global_shortcut(handle: AppHandle) {
                         let fov = estimate_fov(
                             params.game_sens,
                             calculate_yaw(counts as i32, params.game_sens),
-                            app_state.tracker.count,
+                            app_state.tracker.count.abs(),
                         );
 
                         app_handle
@@ -186,6 +289,160 @@ fn setup_global_shortcut(handle: AppHandle) {
                         };
                         app_state.tracker.start_tracking(hwnd).unwrap();
                     }
+                }
+                "measure_yaw" => {
+                    if app_state.tracker.tracking {
+                        app_state.tracker.stop_tracking().unwrap();
+
+                        yaw_params.counts = app_state.tracker.count.abs();
+                        yaw_params.inc = 360.0 / yaw_params.counts as f64;
+                        yaw_params.yaw = yaw_params.inc / yaw_params.sens;
+                        yaw_params.lower_limit = yaw_params.yaw * 0.9;
+                        yaw_params.upper_limit = yaw_params.yaw * 1.1;
+
+                        app_handle
+                            .emit_all(
+                                "yaw_update",
+                                YawStuff {
+                                    sens: yaw_params.sens,
+                                    counts: yaw_params.counts,
+                                    inc: yaw_params.inc,
+                                    yaw: yaw_params.yaw,
+                                    lower_limit: yaw_params.lower_limit,
+                                    upper_limit: yaw_params.upper_limit,
+                                },
+                            )
+                            .unwrap();
+                    } else {
+                        let window = app_handle.get_window("main").unwrap();
+                        let hwnd = match window.hwnd() {
+                            Ok(hwnd) => hwnd.0 as HWND,
+                            Err(_) => panic!("Failed to get window handle"),
+                        };
+                        app_state.tracker.start_tracking(hwnd).unwrap();
+                    }
+                }
+                _ => {
+                    println!("Hotkey pressed on unknown page");
+                }
+            }
+        })
+        .unwrap();
+
+    let app_handle = handle.clone();
+
+    global_shortcut_manager
+        .register(&hotkey2, move || {
+            let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
+            let app_state = app_state.lock().unwrap();
+
+            let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
+            let settings_params = settings_state.lock().unwrap();
+
+            let yaw_state: State<Arc<Mutex<YawStuff>>> = app_handle.state();
+            let yaw_params = yaw_state.lock().unwrap();
+
+            match app_state.current_page.as_str() {
+                "measure_yaw" => {
+                    move_mouse_by(
+                        yaw_params.counts,
+                        (50 as f32 / settings_params.turn_speed) as i32,
+                        true,
+                    );
+                }
+                _ => {
+                    println!("Hotkey pressed on unknown page");
+                }
+            }
+        })
+        .unwrap();
+
+    let app_handle = handle.clone();
+
+    global_shortcut_manager
+        .register(&hotkey3, move || {
+            let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
+            let app_state = app_state.lock().unwrap();
+
+            let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
+            let settings_params = settings_state.lock().unwrap();
+
+            let yaw_state: State<Arc<Mutex<YawStuff>>> = app_handle.state();
+            let mut yaw_params = yaw_state.lock().unwrap();
+
+            match app_state.current_page.as_str() {
+                "measure_yaw" => {
+                    move_mouse_by(
+                        yaw_params.counts,
+                        (50 as f32 / settings_params.turn_speed) as i32,
+                        false,
+                    );
+
+                    yaw_params.upper_limit = yaw_params.yaw;
+                    yaw_params.yaw = (yaw_params.upper_limit + yaw_params.lower_limit) / 2.0;
+                    yaw_params.inc = yaw_params.sens * yaw_params.yaw;
+                    yaw_params.counts = (360.0 / yaw_params.inc).round() as i32;
+
+                    app_handle
+                        .emit_all(
+                            "yaw_update",
+                            YawStuff {
+                                sens: yaw_params.sens,
+                                counts: yaw_params.counts,
+                                inc: yaw_params.inc,
+                                yaw: yaw_params.yaw,
+                                lower_limit: yaw_params.lower_limit,
+                                upper_limit: yaw_params.upper_limit,
+                            },
+                        )
+                        .unwrap();
+                }
+                _ => {
+                    println!("Hotkey pressed on unknown page");
+                }
+            }
+        })
+        .unwrap();
+
+    let app_handle = handle.clone();
+
+    global_shortcut_manager
+        .register(&hotkey4, move || {
+            let app_state = APP_STATE.lock().unwrap().as_ref().unwrap().clone();
+            let app_state = app_state.lock().unwrap();
+
+            let settings_state: State<Arc<Mutex<AppSettings>>> = app_handle.state();
+            let settings_params = settings_state.lock().unwrap();
+
+            let yaw_state: State<Arc<Mutex<YawStuff>>> = app_handle.state();
+            let mut yaw_params = yaw_state.lock().unwrap();
+
+            match app_state.current_page.as_str() {
+                "measure_yaw" => {
+                    move_mouse_by(
+                        yaw_params.counts,
+                        (50 as f32 / settings_params.turn_speed) as i32,
+                        false,
+                    );
+
+                    yaw_params.lower_limit = yaw_params.yaw;
+                    yaw_params.yaw = (yaw_params.upper_limit + yaw_params.lower_limit) / 2.0;
+                    yaw_params.inc = yaw_params.sens * yaw_params.yaw;
+                    yaw_params.counts = (360.0 / yaw_params.inc).round() as i32;
+
+                    app_handle
+                        .emit_all(
+                            "yaw_update",
+                            YawStuff {
+                                sens: yaw_params.sens,
+                                counts: yaw_params.counts,
+                                inc: yaw_params.inc,
+                                yaw: yaw_params.yaw,
+                                lower_limit: yaw_params.lower_limit,
+                                upper_limit: yaw_params.upper_limit,
+                            },
+                        )
+                        .unwrap();
                 }
                 _ => {
                     println!("Hotkey pressed on unknown page");
@@ -210,8 +467,14 @@ fn load_app_settings() -> Result<AppSettings, Box<dyn std::error::Error>> {
     if path.exists() {
         let data = fs::read_to_string(path)?;
         let mut settings: AppSettings = serde_json::from_str(&data)?;
-        if settings.hotkey == "" || settings.hotkey == "Unidentified" {
-            settings.hotkey = "F1".to_string();
+        if settings.hotkey1 == "" || settings.hotkey1 == "Unidentified" {
+            settings.hotkey1 = "F1".to_string();
+        }
+        if settings.hotkey2 == "" || settings.hotkey2 == "Unidentified" {
+            settings.hotkey2 = "F2".to_string();
+        }
+        if settings.hotkey3 == "" || settings.hotkey3 == "Unidentified" {
+            settings.hotkey3 = "F3".to_string();
         }
         Ok(settings)
     } else {
@@ -234,6 +497,33 @@ fn get_settings_path() -> PathBuf {
     config_dir.join("settings.json")
 }
 
+fn get_yaw_file_path() -> PathBuf {
+    let config_dir = tauri::api::path::app_config_dir(&tauri::Config::default())
+        .expect("Failed to get config directory")
+        .join("AimCalibrate");
+
+    if !config_dir.exists() {
+        fs::create_dir_all(&config_dir).expect("Failed to create config directory");
+    }
+
+    config_dir.join("Games.json")
+}
+
+fn load_yaw_data(path: &PathBuf) -> Result<Vec<GameYaw>, Box<dyn std::error::Error>> {
+    if path.exists() {
+        let data = fs::read_to_string(path)?;
+        let game_yaws: Vec<GameYaw> = serde_json::from_str(&data)?;
+        Ok(game_yaws)
+    } else {
+        Ok(vec![])
+    }
+}
+
+fn save_yaw_data(path: &PathBuf, game_yaws: &Vec<GameYaw>) -> Result<(), Box<dyn std::error::Error>> {
+    let data = serde_json::to_string(game_yaws)?;
+    fs::write(path, data)?;
+    Ok(())
+}
 
 fn main() {
     let app_settings = load_app_settings().expect("Failed to load settings");
@@ -251,6 +541,14 @@ fn main() {
             tracker: MouseTracker::new(),
         })))
         .manage(Arc::new(Mutex::new(app_settings)))
+        .manage(Arc::new(Mutex::new(YawStuff {
+            sens: 1.0,
+            counts: 0,
+            inc: 0.0,
+            yaw: 0.0,
+            lower_limit: 0.0,
+            upper_limit: 1000.0,
+        })))
         .setup(|app| {
             let window = app.get_window("main").unwrap();
             let hwnd = match window.hwnd() {
@@ -280,7 +578,10 @@ fn main() {
             set_current_page,
             get_initial_values,
             set_app_settings,
-            get_app_settings
+            get_app_settings,
+            set_yaw_stuff,
+            get_yaw_stuff,
+            save_game_yaw
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -180,11 +180,30 @@ input:focus {
   border-radius: 5px;
 }
 
+.limits-group {
+  display: flex;
+  justify-content: space-between;
+  max-width: 340px;
+}
+
+.limits-group .input-group {
+  flex: 1;
+  max-width: 40%;
+}
+
 .keybind-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.keybind-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  max-width: 300px;
 }
 
 .keybind-button {
@@ -194,6 +213,8 @@ input:focus {
   border-radius: 4px;
   background-color: #007bff;
   color: white;
+  width: 40%;
+  height: 50px;
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -238,4 +259,15 @@ input:focus {
 .slider input[type="range"] {
   width: 80%;
   cursor: pointer;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.button-container button {
+  width: 50%;
 }

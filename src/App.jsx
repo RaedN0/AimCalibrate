@@ -6,6 +6,7 @@ import MainSensitivity from './pages/MainSensitivity';
 import ScopedSensitivity from './pages/ScopedSensitivity';
 import MeasureFov from './pages/MeasureFov';
 import Settings from "./pages/Settings.jsx";
+import MeasureYaw from "./pages/MeasureYaw.jsx";
 import logo from '/acLogo.png'; // Adjust the path based on your project structure
 
 function App() {
@@ -33,6 +34,9 @@ function App() {
                         <li>
                             <NavLink to="/measure-fov" onClick={() => setPage("measure_fov")}>Measure FOV</NavLink>
                         </li>
+                        <li>
+                            <NavLink to="/measure-yaw" onClick={() => setPage("measure_yaw")}>Measure Yaw</NavLink>
+                        </li>
                     </ul>
                     <div className="sidebar-settings">
                         <NavLink to="/settings" onClick={() => setPage("settings")}>Settings</NavLink>
@@ -43,6 +47,7 @@ function App() {
                         <Route path="/" element={<MainSensitivity/>}/>
                         <Route path="/scoped-sensitivity" element={<ScopedSensitivity/>}/>
                         <Route path="/measure-fov" element={<MeasureFov/>}/>
+                        <Route path="/measure-yaw" element={<MeasureYaw/>}/>
                         <Route path="/settings" element={<Settings/>}/>
                     </Routes>
                 </div>

@@ -3,8 +3,13 @@ import {invoke} from '@tauri-apps/api/tauri';
 import debounce from 'lodash/debounce';
 
 function Settings() {
-    const [hotkey, setHotkey] = useState('');
-    const [settingHotkey, setSettingHotkey] = useState(false);
+    const [hotkeys, setHotkeys] = useState({
+        hotkey1: '',
+        hotkey2: '',
+        hotkey3: '',
+        hotkey4: ''
+    });
+    const [settingHotkey, setSettingHotkey] = useState(null);
     const [sliderValue, setSliderValue] = useState(1);
 
     useEffect(() => {
@@ -12,7 +17,12 @@ function Settings() {
             try {
                 const response = await invoke('get_app_settings');
                 setSliderValue(response.turn_speed.toFixed(1));
-                setHotkey(response.hotkey);
+                setHotkeys({
+                    hotkey1: response.hotkey1,
+                    hotkey2: response.hotkey2,
+                    hotkey3: response.hotkey3,
+                    hotkey4: response.hotkey4
+                });
             } catch (error) {
                 console.error('Failed to fetch initial values:', error);
             }
@@ -22,15 +32,17 @@ function Settings() {
     }, []);
 
     useEffect(() => {
-        debouncedUpdateSettings(sliderValue, hotkey)
-    }, [hotkey, sliderValue]);
+        debouncedUpdateSettings(sliderValue, hotkeys)
+    }, [hotkeys, sliderValue]);
 
     const debouncedUpdateSettings = useCallback(
-        debounce((sliderValue, hotkey) => {
-            console.log(hotkey);
+        debounce((sliderValue, hotkeys) => {
             invoke('set_app_settings', {
                 turnSpeed: parseFloat(sliderValue),
-                hotkey: hotkey
+                hotkey1: hotkeys.hotkey1,
+                hotkey2: hotkeys.hotkey2,
+                hotkey3: hotkeys.hotkey3,
+                hotkey4: hotkeys.hotkey4
             }).catch((error) => {
                 console.error('Failed to set user settings:', error);
             });
@@ -42,8 +54,11 @@ function Settings() {
         setSliderValue(event.target.value);
     };
 
-    const updateHotkey = (newHotkey) => {
-        setHotkey(newHotkey)
+    const updateHotkey = (newHotkey, key) => {
+        setHotkeys((prevHotkeys) => ({
+            ...prevHotkeys,
+            [key]: newHotkey
+        }));
     };
 
     const handleKeyPress = (event) => {
@@ -59,22 +74,36 @@ function Settings() {
             if (key !== 'Control' && key !== 'Alt' && key !== 'Shift' && key !== 'Meta') {
                 const hotkeyString = `${ctrl}${alt}${shift}${meta}${key}`;
 
-                updateHotkey(hotkeyString);
-                setSettingHotkey(false);
+                updateHotkey(hotkeyString, settingHotkey);
+                setSettingHotkey(null);
             }
         }
     };
 
     return (
         <div>
-            <div className="keybind-container" tabIndex="0"
-                 onKeyDown={handleKeyPress}>
+            <div className="keybind-container" tabIndex="0" onKeyDown={handleKeyPress}>
                 <div className="current-keybind">
-                    Current Hotkey: {hotkey}
+                    Current Hotkeys:
+                    <div>Hotkey 1: {hotkeys.hotkey1}</div>
+                    <div>Hotkey 2: {hotkeys.hotkey2}</div>
+                    <div>Hotkey 3: {hotkeys.hotkey3}</div>
+                    <div>Hotkey 4: {hotkeys.hotkey4}</div>
                 </div>
-                <button className="keybind-button" onClick={() => setSettingHotkey(true)}>
-                    {settingHotkey ? 'Press any key...' : 'Set Hotkey'}
-                </button>
+                <div className="keybind-buttons">
+                    <button className="keybind-button" onClick={() => setSettingHotkey('hotkey1')}>
+                        {settingHotkey === 'hotkey1' ? 'Press any key...' : 'Set Hotkey 1'}
+                    </button>
+                    <button className="keybind-button" onClick={() => setSettingHotkey('hotkey2')}>
+                        {settingHotkey === 'hotkey2' ? 'Press any key...' : 'Set Hotkey 2'}
+                    </button>
+                    <button className="keybind-button" onClick={() => setSettingHotkey('hotkey3')}>
+                        {settingHotkey === 'hotkey3' ? 'Press any key...' : 'Set Hotkey 3'}
+                    </button>
+                    <button className="keybind-button" onClick={() => setSettingHotkey('hotkey4')}>
+                        {settingHotkey === 'hotkey4' ? 'Press any key...' : 'Set Hotkey 4'}
+                    </button>
+                </div>
             </div>
             <div className="slider">
                 <label htmlFor="sensitivity-slider">Turn speed: {sliderValue}</label>
@@ -89,7 +118,6 @@ function Settings() {
                 />
             </div>
         </div>
-
     );
 }
 
