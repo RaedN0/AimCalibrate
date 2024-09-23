@@ -32,6 +32,7 @@ version = "0.0.0"
 dependencies = [
  "enigo",
  "lazy_static",
+ "once_cell",
  "serde",
  "serde_json",
  "tauri",
