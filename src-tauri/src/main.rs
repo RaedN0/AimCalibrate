@@ -2,10 +2,7 @@
 
 use enigo::{Enigo, MouseControllable};
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
 
 #[cfg(target_os = "windows")]
@@ -67,7 +64,7 @@ mod models;
 use calculations::{calculate_counts, calculate_scoped_counts, calculate_yaw, estimate_fov};
 use crate::commands::{get_app_settings, get_initial_values, get_yaw_stuff, save_game_yaw, set_app_settings, set_current_page, set_user_settings, set_yaw_stuff};
 use crate::models::{UserSettings, YawStuff};
-use crate::utils::{get_yaw_file_path, load_app_settings, load_yaw_data, save_app_settings, save_yaw_data, setup_global_shortcuts};
+use crate::utils::{load_app_settings, setup_global_shortcuts};
 
 fn main() {
     let app_settings = load_app_settings().expect("Failed to load settings");
