@@ -4,30 +4,25 @@ use crate::mouse_tracker_mock::{AppState, APP_STATE};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use enigo::{Enigo, MouseControllable};
 use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
 
 pub fn move_mouse_by(mut x: i32, steps: i32, right: bool) {
-    #[cfg(target_os = "windows")]
-    {
-        let mut enigo = Enigo::new();
+    let mut enigo = Enigo::new();
 
-        let step_count = x / steps;
-        while x > 0 {
-            if right {
-                let move_by = if x > step_count { step_count } else { x };
-                enigo.mouse_move_relative(move_by, 0);
-                x -= move_by;
-            } else {
-                let move_by = if x > step_count { step_count } else { x };
-                enigo.mouse_move_relative(-move_by, 0);
-                x -= move_by;
-            }
-            std::thread::sleep(Duration::from_millis(10));
+    let step_count = x / steps;
+    while x > 0 {
+        if right {
+            let move_by = if x > step_count { step_count } else { x };
+            enigo.mouse_move_relative(move_by, 0);
+            x -= move_by;
+        } else {
+            let move_by = if x > step_count { step_count } else { x };
+            enigo.mouse_move_relative(-move_by, 0);
+            x -= move_by;
         }
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        println!("Mock mouse movement on macOS");
+        std::thread::sleep(Duration::from_millis(10));
     }
 }
 
