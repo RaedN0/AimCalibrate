@@ -18,10 +18,10 @@ function Settings() {
                 const response = await invoke('get_app_settings');
                 setSliderValue(response.turn_speed.toFixed(1));
                 setHotkeys({
-                    hotkey1: response.hotkey1,
-                    hotkey2: response.hotkey2,
-                    hotkey3: response.hotkey3,
-                    hotkey4: response.hotkey4
+                    hotkey1: response.hotkeys.at(0),
+                    hotkey2: response.hotkeys.at(1),
+                    hotkey3: response.hotkeys.at(2),
+                    hotkey4: response.hotkeys.at(3)
                 });
             } catch (error) {
                 console.error('Failed to fetch initial values:', error);
@@ -39,10 +39,7 @@ function Settings() {
         debounce((sliderValue, hotkeys) => {
             invoke('set_app_settings', {
                 turnSpeed: parseFloat(sliderValue),
-                hotkey1: hotkeys.hotkey1,
-                hotkey2: hotkeys.hotkey2,
-                hotkey3: hotkeys.hotkey3,
-                hotkey4: hotkeys.hotkey4
+                hotkeys: [hotkeys.hotkey1, hotkeys.hotkey2, hotkeys.hotkey3, hotkeys.hotkey4]
             }).catch((error) => {
                 console.error('Failed to set user settings:', error);
             });
