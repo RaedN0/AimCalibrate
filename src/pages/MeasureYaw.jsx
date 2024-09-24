@@ -26,7 +26,7 @@ function MeasureYaw() {
         const fetchInitialValues = async () => {
             try {
                 startListener();
-                const response = await invoke('get_yaw_stuff');
+                const response = await invoke('get_yaw_values');
                 console.log(response);
                 setSens(response.sens);
                 setYaw(response.yaw);
@@ -43,7 +43,7 @@ function MeasureYaw() {
     const handleSensChange = async (sens) => {
         setSens(sens);
         try {
-            const response = await invoke('set_yaw_stuff', {
+            const response = await invoke('set_yaw_values', {
                 sens: sens
             });
             setYaw(response.yaw);

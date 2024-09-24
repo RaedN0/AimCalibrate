@@ -29,7 +29,7 @@ pub fn get_app_settings(state: State<'_, Arc<Mutex<AppSettings>>>) -> AppSetting
 }
 
 #[tauri::command]
-pub fn set_yaw_stuff(sens: Option<f64>, state: State<'_, Arc<Mutex<YawStuff>>>) -> YawStuff {
+pub fn set_yaw_values(sens: Option<f64>, state: State<'_, Arc<Mutex<YawStuff>>>) -> YawStuff {
     let mut params = state.lock().unwrap();
 
     params.sens = sens.unwrap_or(params.sens);
@@ -41,7 +41,7 @@ pub fn set_yaw_stuff(sens: Option<f64>, state: State<'_, Arc<Mutex<YawStuff>>>) 
 }
 
 #[tauri::command]
-pub fn get_yaw_stuff(state: State<'_, Arc<Mutex<YawStuff>>>) -> YawStuff {
+pub fn get_yaw_values(state: State<'_, Arc<Mutex<YawStuff>>>) -> YawStuff {
     state.lock().unwrap().clone()
 }
 
