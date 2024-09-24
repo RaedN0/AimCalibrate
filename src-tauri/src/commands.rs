@@ -63,6 +63,13 @@ pub fn save_game_yaw(name: String, state: State<'_, Arc<Mutex<YawStuff>>>) {
 }
 
 #[tauri::command]
+pub fn get_games() -> Vec<GameYaw>{
+    let path = get_yaw_file_path();
+    let games = load_yaw_data(&path).expect("No Games found");
+    games
+}
+
+#[tauri::command]
 pub fn set_user_settings(
     cm360: Option<f64>,
     dpi: Option<i32>,
