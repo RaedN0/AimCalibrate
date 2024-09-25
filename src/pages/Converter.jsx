@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef, useCallback} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {invoke} from '@tauri-apps/api/tauri';
 import debounce from 'lodash/debounce';
 import {Tooltip as ReactTooltip} from 'react-tooltip';
@@ -7,7 +7,7 @@ import {faQuestionCircle} from '@fortawesome/free-solid-svg-icons';
 
 function Converter() {
     const [games, setGames] = useState([]);
-    const [sourceGameIndex, setSourceGameIndex] = useState(null);
+    const [sourceGameIndex, setsourceGameIndex] = useState(null);
     const [destGameIndex, setDestGameIndex] = useState(null);
     const [sourceSens, setSourceSens] = useState(0);
     const [newSens, setNewSens] = useState(0);
@@ -32,7 +32,8 @@ function Converter() {
         const fetchGames = async () => {
             try {
                 const response = await invoke('get_games');
-                setGames(response);
+                const updatedGames = [{name: 'cm/360', yaw: 360.0}, ...response];
+                setGames(updatedGames);
             } catch (error) {
                 console.error('Failed to fetch games: ', error);
             }
@@ -70,6 +71,9 @@ function Converter() {
         }
     }, [sourceSens, sourceDpi, destDpi, sourceGameIndex, destGameIndex]);
 
+    const isSourceCm360 = games[sourceGameIndex]?.name === 'cm/360';
+    const isDestCm360 = games[destGameIndex]?.name === 'cm/360';
+
     return (
         <div className="main-container">
             <ReactTooltip id="info-tooltip" className="tooltip-box"/>
@@ -88,7 +92,7 @@ function Converter() {
                     id="source-select"
                     name="source-select"
                     value={sourceGameIndex !== null ? sourceGameIndex : ''}
-                    onChange={(e) => setSourceGameIndex(parseInt(e.target.value))}
+                    onChange={(e) => setsourceGameIndex(parseInt(e.target.value))}
                     data-tooltip-id="info-tooltip"
                     data-tooltip-content="Select your game"
                     data-tooltip-place="bottom"
@@ -127,6 +131,7 @@ function Converter() {
                         data-tooltip-id="info-tooltip"
                         data-tooltip-content="DPI of your mouse"
                         data-tooltip-place="bottom" className="info-icon"
+                        disabled={isSourceCm360}
                     />
                 </div>
             </div>
@@ -175,6 +180,7 @@ function Converter() {
                         data-tooltip-id="info-tooltip"
                         data-tooltip-content="DPI of your mouse"
                         data-tooltip-place="bottom" className="info-icon"
+                        disabled={isDestCm360}
                     />
                 </div>
             </div>
