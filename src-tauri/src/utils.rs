@@ -1,12 +1,20 @@
 use crate::calculations::{calculate_counts, calculate_scoped_counts, calculate_yaw, estimate_fov};
 use crate::models::{AppSettings, FovUpdatePayload, GameYaw, UserSettings, YawStuff};
+#[cfg(not(target_os = "windows"))]
 use crate::mouse_tracker_mock::{AppState, APP_STATE};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use enigo::{Enigo, MouseControllable};
+
+#[cfg(target_os = "windows")]
+use winapi::shared::windef::HWND;
+
+#[cfg(target_os = "windows")]
 use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
+#[cfg(target_os = "windows")]
+use crate::mouse_tracker::{AppState, APP_STATE};
 
 pub fn move_mouse_by(mut x: i32, steps: i32, right: bool) {
     let mut enigo = Enigo::new();

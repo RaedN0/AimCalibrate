@@ -1,9 +1,13 @@
 use crate::calculations::{calculate_cm, calculate_sens, convert_sensitivity};
 use crate::models::{AppSettings, GameYaw, UserSettings, YawStuff};
+#[cfg(not(target_os = "windows"))]
 use crate::mouse_tracker_mock::AppState;
 use crate::utils::{get_yaw_file_path, load_yaw_data, save_app_settings, save_yaw_data, setup_global_shortcuts};
 use std::sync::{Arc, Mutex};
+#[cfg(target_os = "windows")]
 use tauri::{AppHandle, State};
+#[cfg(target_os = "windows")]
+use crate::mouse_tracker::AppState;
 
 #[tauri::command]
 pub fn set_app_settings(
