@@ -62,7 +62,7 @@ mod commands;
 mod models;
 
 use calculations::{calculate_counts, calculate_scoped_counts, calculate_yaw, estimate_fov};
-use crate::commands::{get_app_settings, get_initial_values, get_yaw_values, save_game_yaw, set_app_settings, set_current_page, set_user_settings, set_yaw_values};
+use crate::commands::{convert_sens, get_app_settings, get_games, get_initial_values, get_yaw_values, save_game_yaw, set_app_settings, set_current_page, set_user_settings, set_yaw_values};
 use crate::models::{UserSettings, YawStuff};
 use crate::utils::{load_app_settings, setup_global_shortcuts};
 
@@ -131,7 +131,9 @@ fn main() {
             get_app_settings,
             set_yaw_values,
             get_yaw_values,
-            save_game_yaw
+            save_game_yaw,
+            get_games,
+            convert_sens
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

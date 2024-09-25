@@ -25,3 +25,23 @@ pub fn calculate_counts(cm: f64, dpi: i32) -> i32 {
     let counts_per360 = inches_per360 * dpi as f64;
     counts_per360.round() as i32
 }
+
+fn calculate_cm(sens: f64, dpi: i32, yaw: f64) -> f64 {
+    let counts = 360.0 / (sens * yaw);
+    let inches_per360 = counts / dpi as f64;
+    let cm_per360 = inches_per360 * 2.54;
+    cm_per360
+}
+
+fn calculate_sens(cm_per360: f64, dpi: i32, yaw: f64) -> f64 {
+    let inches_per360 = cm_per360 / 2.54;
+    let counts = inches_per360 * dpi as f64;
+    let sens = 360.0 / (counts * yaw);
+    sens
+}
+
+pub fn convert_sensitivity(old_sens: f64, old_dpi: i32, new_dpi: i32, yaw1: f64, yaw2: f64) -> f64 {
+    let cm_per360 = calculate_cm(old_sens, old_dpi, yaw1);
+    let sens = calculate_sens(cm_per360, new_dpi, yaw2);
+    sens
+}

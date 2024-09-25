@@ -71,7 +71,8 @@ function MeasureYaw() {
         // Save the dialog text here
         console.log('Dialog text saved:', dialogText);
         invoke('save_game_yaw', {
-            name: dialogText
+            name: dialogText,
+            yaw: yaw
         })
         closeDialog();
     };
@@ -110,7 +111,7 @@ function MeasureYaw() {
                     id="yaw"
                     name="yaw"
                     value={yaw}
-                    readOnly
+                    onChange={(e) => setYaw(parseFloat(e.target.value))}
                     data-tooltip-id="info-tooltip"
                     data-tooltip-content="Estimated yaw value of the game"
                     data-tooltip-place="bottom" className="info-icon"
