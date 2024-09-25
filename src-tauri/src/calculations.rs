@@ -26,14 +26,14 @@ pub fn calculate_counts(cm: f64, dpi: i32) -> i32 {
     counts_per360.round() as i32
 }
 
-fn calculate_cm(sens: f64, dpi: i32, yaw: f64) -> f64 {
+pub fn calculate_cm(sens: f64, dpi: i32, yaw: f64) -> f64 {
     let counts = 360.0 / (sens * yaw);
     let inches_per360 = counts / dpi as f64;
     let cm_per360 = inches_per360 * 2.54;
     cm_per360
 }
 
-fn calculate_sens(cm_per360: f64, dpi: i32, yaw: f64) -> f64 {
+pub fn calculate_sens(cm_per360: f64, dpi: i32, yaw: f64) -> f64 {
     let inches_per360 = cm_per360 / 2.54;
     let counts = inches_per360 * dpi as f64;
     let sens = 360.0 / (counts * yaw);

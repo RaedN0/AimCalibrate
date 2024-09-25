@@ -1,4 +1,4 @@
-use crate::calculations::convert_sensitivity;
+use crate::calculations::{calculate_cm, calculate_sens, convert_sensitivity};
 use crate::models::{AppSettings, GameYaw, UserSettings, YawStuff};
 use crate::mouse_tracker_mock::AppState;
 use crate::utils::{get_yaw_file_path, load_yaw_data, save_app_settings, save_yaw_data, setup_global_shortcuts};
@@ -107,7 +107,12 @@ pub fn set_current_page(page: String, state: State<'_, Arc<Mutex<AppState>>>) {
 
 #[tauri::command]
 pub fn convert_sens(dpi: i32, sens: f64, yaw1: f64, new_dpi: i32, yaw2: f64) -> f64 {
-    println!("Sens: {sens}, Yaw: {yaw1} {yaw2}");
-    let sens = convert_sensitivity(sens, dpi, new_dpi, yaw1, yaw2);
-    sens
+    let mut new_sens = convert_sensitivity(sens, dpi, new_dpi, yaw1, yaw2);
+    if yaw1 == 360.0 {
+        new_sens = calculate_sens(sens, new_dpi, yaw2);
+    }
+    if yaw2 == 360.0 {
+        new_sens = calculate_cm(sens, dpi, yaw1);
+    }
+    new_sens
 }
