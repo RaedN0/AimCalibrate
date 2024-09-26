@@ -315,3 +315,24 @@ input:disabled {
 .button-container button {
   width: 50%;
 }
+
+/* Apply styles to the Select component text */
+.MuiSelect-select {
+  color: #e0e0e0 !important; /* Change the text color inside the Select */
+}
+
+/* Change the color of the border for the Select component */
+.MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+  border-color: #e0e0e0 !important; /* Change the default border color */
+}
+
+/* Change the border color when the Select component is focused */
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #007bff !important; /* Change the border color on focus */
+}
+
+/* Change the color of the dropdown arrow (icon) */
+.MuiSelect-icon {
+  color: #e0e0e0 !important; /* Change the dropdown arrow color */
+}
+

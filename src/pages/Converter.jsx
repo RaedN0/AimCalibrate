@@ -4,6 +4,10 @@ import debounce from 'lodash/debounce';
 import {Tooltip as ReactTooltip} from 'react-tooltip';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faQuestionCircle} from '@fortawesome/free-solid-svg-icons';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
 
 function Converter() {
     const [games, setGames] = useState([]);
@@ -53,7 +57,7 @@ function Converter() {
                     sens: sourceSens,
                     yaw1: sourceGameData.yaw,
                     newDpi: destDpi,
-                    yaw2: destGameData.yaw
+                    yaw2: destGameData.yaw,
                 });
 
                 setNewSens(response);
@@ -78,33 +82,42 @@ function Converter() {
         <div className="main-container">
             <ReactTooltip id="info-tooltip" className="tooltip-box"/>
             <div className="info-container">
-                <FontAwesomeIcon icon={faQuestionCircle}
-                                 data-tooltip-id="info-tooltip"
-                                 data-tooltip-content="This page lets you convert sensitivities between games you measured before.
+                <FontAwesomeIcon
+                    icon={faQuestionCircle}
+                    data-tooltip-id="info-tooltip"
+                    data-tooltip-content={`This page lets you convert sensitivities between games you measured before.
 1. Select Source and Destination games
 2. Enter Source and Destination DPI
-3. Enter your Sensitivity for the first game"
-                                 data-tooltip-place="left" className="info-icon"/>
+3. Enter your Sensitivity for the first game`}
+                    data-tooltip-place="left"
+                    className="info-icon"
+                />
             </div>
             <div className="input-group">
-                <label htmlFor="source-select">Select Source-Game:</label>
-                <select
-                    id="source-select"
-                    name="source-select"
-                    value={sourceGameIndex !== null ? sourceGameIndex : ''}
-                    onChange={(e) => setsourceGameIndex(parseInt(e.target.value))}
-                    data-tooltip-id="info-tooltip"
-                    data-tooltip-content="Select your game"
-                    data-tooltip-place="bottom"
-                    className="info-icon"
-                >
-                    <option value="">Select a game</option>
-                    {games.map((game, index) => (
-                        <option key={index} value={index}>
-                            {game.name}
-                        </option>
-                    ))}
-                </select>
+                <FormControl fullWidth>
+                    <InputLabel id="source-select-label">Select Source-Game</InputLabel>
+                    <Select
+                        labelId="source-select-label"
+                        id="source-select"
+                        name="source-select"
+                        value={sourceGameIndex !== null ? sourceGameIndex : ''}
+                        onChange={(e) => setsourceGameIndex(parseInt(e.target.value))}
+                        label="Select Source-Game"
+                        data-tooltip-id="info-tooltip"
+                        data-tooltip-content="Select your game"
+                        data-tooltip-place="bottom"
+                        className="info-icon"
+                    >
+                        <MenuItem value="">
+                            <em>Select a game</em>
+                        </MenuItem>
+                        {games.map((game, index) => (
+                            <MenuItem key={index} value={index}>
+                                {game.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             </div>
             <div className="sens-group">
                 <div className="input-group">
@@ -117,7 +130,8 @@ function Converter() {
                         onChange={(e) => setSourceSens(parseFloat(e.target.value))}
                         data-tooltip-id="info-tooltip"
                         data-tooltip-content="Sensitivity you want to convert"
-                        data-tooltip-place="bottom" className="info-icon"
+                        data-tooltip-place="bottom"
+                        className="info-icon"
                     />
                 </div>
                 <div className="input-group">
@@ -130,30 +144,37 @@ function Converter() {
                         onChange={(e) => setSourceDpi(parseInt(e.target.value))}
                         data-tooltip-id="info-tooltip"
                         data-tooltip-content="DPI of your mouse"
-                        data-tooltip-place="bottom" className="info-icon"
+                        data-tooltip-place="bottom"
+                        className="info-icon"
                         disabled={isSourceCm360}
                     />
                 </div>
             </div>
             <div className="input-group">
-                <label htmlFor="dest-select">Select Destination-Game:</label>
-                <select
-                    id="dest-select"
-                    name="dest-select"
-                    value={destGameIndex !== null ? destGameIndex : ''}
-                    onChange={(e) => setDestGameIndex(parseInt(e.target.value))}
-                    data-tooltip-id="info-tooltip"
-                    data-tooltip-content="Select your game"
-                    data-tooltip-place="bottom"
-                    className="info-icon"
-                >
-                    <option value="">Select a game</option>
-                    {games.map((game, index) => (
-                        <option key={index} value={index}>
-                            {game.name}
-                        </option>
-                    ))}
-                </select>
+                <FormControl fullWidth>
+                    <InputLabel id="dest-select-label">Select Destination-Game</InputLabel>
+                    <Select
+                        labelId="dest-select-label"
+                        id="dest-select"
+                        name="dest-select"
+                        value={destGameIndex !== null ? destGameIndex : ''}
+                        onChange={(e) => setDestGameIndex(parseInt(e.target.value))}
+                        label="Select Destination-Game"
+                        data-tooltip-id="info-tooltip"
+                        data-tooltip-content="Select your game"
+                        data-tooltip-place="bottom"
+                        className="info-icon"
+                    >
+                        <MenuItem value="">
+                            <em>Select a game</em>
+                        </MenuItem>
+                        {games.map((game, index) => (
+                            <MenuItem key={index} value={index}>
+                                {game.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             </div>
             <div className="sens-group">
                 <div className="input-group">
@@ -165,8 +186,10 @@ function Converter() {
                         value={newSens}
                         onChange={(e) => setNewSens(parseFloat(e.target.value))}
                         data-tooltip-id="info-tooltip"
-                        data-tooltip-content="Sensitivity you want to convert"
-                        data-tooltip-place="bottom" className="info-icon"
+                        data-tooltip-content="Converted sensitivity"
+                        data-tooltip-place="bottom"
+                        className="info-icon"
+                        readOnly
                     />
                 </div>
                 <div className="input-group">
@@ -179,7 +202,8 @@ function Converter() {
                         onChange={(e) => setDestDpi(parseInt(e.target.value))}
                         data-tooltip-id="info-tooltip"
                         data-tooltip-content="DPI of your mouse"
-                        data-tooltip-place="bottom" className="info-icon"
+                        data-tooltip-place="bottom"
+                        className="info-icon"
                         disabled={isDestCm360}
                     />
                 </div>
