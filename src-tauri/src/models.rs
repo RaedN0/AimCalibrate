@@ -45,3 +45,8 @@ impl Default for AppSettings {
 pub struct FovUpdatePayload {
     pub fov16: f64,
 }
+
+#[derive(Clone, serde::Serialize)]
+pub struct CmUpdatePayload {
+    pub cm_per360: f64,
+}

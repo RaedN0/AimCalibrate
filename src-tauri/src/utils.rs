@@ -1,20 +1,17 @@
 use crate::calculations::{calculate_counts, calculate_scoped_counts, calculate_yaw, estimate_fov};
-use crate::models::{AppSettings, FovUpdatePayload, GameYaw, UserSettings, YawStuff};
+use crate::models::{AppSettings, CmUpdatePayload, FovUpdatePayload, GameYaw, UserSettings, YawStuff};
+#[cfg(target_os = "windows")]
+use crate::mouse_tracker::{AppState, APP_STATE};
 #[cfg(not(target_os = "windows"))]
 use crate::mouse_tracker_mock::{AppState, APP_STATE};
+use enigo::{Enigo, MouseControllable};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use enigo::{Enigo, MouseControllable};
-
-#[cfg(target_os = "windows")]
-use winapi::shared::windef::HWND;
-
-#[cfg(target_os = "windows")]
 use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
 #[cfg(target_os = "windows")]
-use crate::mouse_tracker::{AppState, APP_STATE};
+use winapi::shared::windef::HWND;
 
 pub fn move_mouse_by(mut x: i32, steps: i32, right: bool) {
     let mut enigo = Enigo::new();
@@ -133,13 +130,31 @@ pub fn handle_hotkey(index: usize, app_handle: &AppHandle) {
         }
         1 => {
             // Hotkey 2 action
-            if app_state.current_page == "measure_yaw" {
-                let settings_params = settings_state.lock().unwrap();
-                move_mouse_by(
-                    yaw_params.counts,
-                    (50.0 / settings_params.turn_speed) as i32,
-                    true,
-                );
+            match app_state.current_page.as_str() {
+                "main_sensitivity" => {
+                    if app_state.tracker.tracking {
+                        app_state.tracker.stop_tracking().unwrap();
+
+                        let cm_per360 = 2.54 * app_state.tracker.count.abs() as f64 / params.dpi as f64;
+
+                        app_handle
+                            .emit_all("cm_update", CmUpdatePayload { cm_per360 })
+                            .unwrap();
+                    } else {
+                        start_tracking(app_handle, &mut app_state);
+                    }
+                }
+                "measure_yaw" => {
+                    let settings_params = settings_state.lock().unwrap();
+                    move_mouse_by(
+                        yaw_params.counts,
+                        (50.0 / settings_params.turn_speed) as i32,
+                        true,
+                    );
+                }
+                _ => {
+                    println!("Hotkey pressed on unknown page");
+                }
             }
         }
         2 => {

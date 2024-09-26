@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/tauri';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {invoke} from '@tauri-apps/api/tauri';
 import debounce from 'lodash/debounce';
-import { Tooltip as ReactTooltip } from 'react-tooltip';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import {Tooltip as ReactTooltip} from 'react-tooltip';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faQuestionCircle} from '@fortawesome/free-solid-svg-icons';
+import {listen} from "@tauri-apps/api/event";
 
 function MainSensitivity() {
     const [cm360, setCm360] = useState(0);
@@ -11,10 +12,10 @@ function MainSensitivity() {
 
     const isInitialMount = useRef(true);
 
-    // Fetch initial values when the component mounts
     useEffect(() => {
         const fetchInitialValues = async () => {
             try {
+                await startListener();
                 const response = await invoke('get_initial_values');
                 setCm360(response.cm360);
                 setDpi(response.dpi);
@@ -26,7 +27,6 @@ function MainSensitivity() {
         fetchInitialValues();
     }, []);
 
-    // Debounced function to update user settings
     const debouncedUpdateSettings = useCallback(
         debounce((cm360, dpi) => {
             invoke('set_user_settings', {
@@ -35,11 +35,10 @@ function MainSensitivity() {
             }).catch((error) => {
                 console.error('Failed to set user settings:', error);
             });
-        }, 500), // Debounce delay of 500ms
+        }, 500),
         []
     );
 
-    // Update backend when values change, but not on initial load
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
@@ -48,17 +47,24 @@ function MainSensitivity() {
         }
     }, [cm360, dpi, debouncedUpdateSettings]);
 
+    async function startListener() {
+        await listen('cm_update', (event) => {
+            const {cmPer360} = event.payload;
+            setCm360(cmPer360);
+        });
+    }
+
     return (
         <div className="main-container">
-            <ReactTooltip id="info-tooltip" className="tooltip-box" />
+            <ReactTooltip id="info-tooltip" className="tooltip-box"/>
             <div className="info-container">
                 <FontAwesomeIcon icon={faQuestionCircle}
-                    data-tooltip-id="info-tooltip"
-                    data-tooltip-content="This page lets you set up your hipfire sensitivity.
+                                 data-tooltip-id="info-tooltip"
+                                 data-tooltip-content="This page lets you set up your hipfire sensitivity.
 1. Enter desired cm/360 and your DPI value
 2. Go into game and use the F1 keybind to turn
 3. Adjust your sensitivity to turn exactly 360 degrees and land at the same spot you started"
-                    data-tooltip-place="left" className="info-icon"/>
+                                 data-tooltip-place="left" className="info-icon"/>
             </div>
             <div className="input-group">
                 <label htmlFor="cm360">cm/360:</label>
