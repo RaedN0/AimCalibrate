@@ -1,9 +1,7 @@
 #![cfg_attr(all(not(debug_assertions), target_os = "windows"), windows_subsystem = "windows")]
 
-use enigo::{Enigo, MouseControllable};
-use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
+use tauri::{Manager, State};
 
 #[cfg(target_os = "windows")]
 use winapi::shared::windef::HWND;

@@ -57,7 +57,7 @@ pub fn save_game_yaw(name: String, yaw: Option<f64>, state: State<'_, Arc<Mutex<
         yaw: params.yaw,
     };
 
-    if(yaw.is_some()) {
+    if yaw.is_some() {
         game_yaw.yaw = yaw.unwrap();
     }
 

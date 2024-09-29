@@ -49,8 +49,8 @@ function MainSensitivity() {
 
     async function startListener() {
         await listen('cm_update', (event) => {
-            const {cmPer360} = event.payload;
-            setCm360(cmPer360);
+            const {cm_per360} = event.payload;
+            setCm360(cm_per360);
         });
     }
 
