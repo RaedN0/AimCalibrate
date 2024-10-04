@@ -145,7 +145,6 @@ pub fn handle_hotkey(index: usize, app_handle: &AppHandle) {
                     }
                 }
                 "measure_yaw" => {
-                    let settings_params = settings_state.lock().unwrap();
                     move_mouse_by(
                         yaw_params.counts,
                         (50.0 / settings_params.turn_speed) as i32,
@@ -160,7 +159,6 @@ pub fn handle_hotkey(index: usize, app_handle: &AppHandle) {
         2 => {
             // Hotkey 3 action
             if app_state.current_page == "measure_yaw" {
-                let settings_params = settings_state.lock().unwrap();
                 move_mouse_by(
                     yaw_params.counts,
                     (50.0 / settings_params.turn_speed) as i32,
@@ -180,7 +178,6 @@ pub fn handle_hotkey(index: usize, app_handle: &AppHandle) {
         3 => {
             // Hotkey 4 action
             if app_state.current_page == "measure_yaw" {
-                let settings_params = settings_state.lock().unwrap();
                 move_mouse_by(
                     yaw_params.counts,
                     (50.0 / settings_params.turn_speed) as i32,
