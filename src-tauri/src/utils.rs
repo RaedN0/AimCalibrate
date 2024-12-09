@@ -4,7 +4,7 @@ use crate::models::{AppSettings, CmUpdatePayload, FovUpdatePayload, GameYaw, Use
 use crate::mouse_tracker::{AppState, APP_STATE};
 #[cfg(not(target_os = "windows"))]
 use crate::mouse_tracker_mock::{AppState, APP_STATE};
-use enigo::{Enigo, MouseControllable};
+use enigo::{Enigo, Mouse, Settings};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -14,17 +14,22 @@ use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
 use winapi::shared::windef::HWND;
 
 pub fn move_mouse_by(mut x: i32, steps: i32, right: bool) {
-    let mut enigo = Enigo::new();
+    let settings = Settings {
+        windows_subject_to_mouse_speed_and_acceleration_level: true,
+        ..Default::default()
+    };
+
+    let mut enigo = Enigo::new(&settings).unwrap();
 
     let step_count = x / steps;
     while x > 0 {
         if right {
             let move_by = if x > step_count { step_count } else { x };
-            enigo.mouse_move_relative(move_by, 0);
+            enigo.move_mouse(move_by, 0, enigo::Coordinate::Rel).unwrap();
             x -= move_by;
         } else {
             let move_by = if x > step_count { step_count } else { x };
-            enigo.mouse_move_relative(-move_by, 0);
+            enigo.move_mouse(-move_by, 0, enigo::Coordinate::Rel).unwrap();
             x -= move_by;
         }
         std::thread::sleep(Duration::from_millis(10));
